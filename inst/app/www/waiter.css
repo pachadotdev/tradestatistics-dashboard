@@ -1,0 +1,6 @@
+/* Styles for waiter overlay content positioning */
+.waiter-overlay-content{
+  position: absolute;
+  top: 45vh;
+  left: 50%;
+}

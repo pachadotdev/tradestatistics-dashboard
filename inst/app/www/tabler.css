@@ -1,0 +1,13 @@
+pre {
+    background-color: #f8f9fa;
+    color: black;
+    font-family: 'Hack', 'Fira Mono', 'Courier New', monospace;
+}
+
+.js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #1f2937}
+.js-irs-0 .irs-from, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #1f2937}
+.js-irs-0 .irs-to, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #1f2937}
+
+.js-irs-1 .irs-single, .js-irs-1 .irs-bar-edge, .js-irs-1 .irs-bar {background: #1f2937}
+.js-irs-1 .irs-from, .js-irs-1 .irs-bar-edge, .js-irs-1 .irs-bar {background: #1f2937}
+.js-irs-1 .irs-to, .js-irs-1 .irs-bar-edge, .js-irs-1 .irs-bar {background: #1f2937}
