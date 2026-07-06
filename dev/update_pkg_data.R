@@ -1,9 +1,8 @@
-library(dplyr)
-library(DBI)
+library(data.table)
 library(RPostgres)
 library(glue)
 
-readRenviron("/tradestatistics/visualization-with-shiny")
+readRenviron("/tradestatistics/credentials.txt")
 
 con <- dbConnect(
   drv = Postgres(),
@@ -13,91 +12,48 @@ con <- dbConnect(
   password = Sys.getenv("TRADESTATISTICS_SQL_PWD")
 )
 
-# reporters ----
+# countries ----
 
-reporters_display <- tbl(con, "countries") %>%
-  select(!!sym("country_iso"), !!sym("country_name")) %>%
-  collect()
+countries <- dbGetQuery(con, "select distinct country, dynamic_code from dgd_countries") 
 
-reporters_out <- reporters_display %>%
-  select(!!sym("country_iso")) %>%
-  pull()
+countries_out <- countries$dynamic_code
 
-reporters_names_out <- reporters_display %>%
-  select(!!sym("country_name")) %>%
-  pull()
+countries_names_out <- countries$country
 
-names(reporters_out) <- reporters_names_out
+names(countries_out) <- countries_names_out
 
-reporters_display <- reporters_out
+countries_out <- sort(countries_out)
 
-# sections ----
+countries <- countries_out
 
-sections_display <- tbl(con, "commodities") %>%
-  collect()
+usethis::use_data(countries, overwrite = T)
 
-sections_out <- sections_display %>%
-  distinct(!!sym("section_code")) %>%
-  pull()
+# sectors ----
 
-sections_names_out <- sections_display %>%
-  distinct(!!sym("section_name")) %>%
-  pull()
+sectors <- dbGetQuery(con, "select * from itpd_sectors")
 
-names(sections_out) <- glue("{ sections_out } - { sections_names_out }")
+sectors_out <- sectors$broad_sector_id
 
-sections_display <- sections_out
+sectors_names_out <- sectors$broad_sector
 
-# commodities short ----
+names(sectors_out) <- paste(sectors_out, sectors_names_out, sep = " - ")
 
-commodities_short_display <- tbl(con, "commodities_short") %>%
-  select(commodity_code, commodity_name) %>%
-  collect()
+sectors <- sectors_out
 
-commodities_short_out <- commodities_short_display %>%
-  select(!!sym("commodity_code")) %>%
-  pull()
+usethis::use_data(sectors, overwrite = T)
 
-commodities_short_names_out <- commodities_short_display %>%
-  select(!!sym("commodity_name")) %>%
-  pull()
+# industries ----
 
-names(commodities_short_out) <- glue("{ commodities_short_out } - { commodities_short_names_out }")
+industries <- dbGetQuery(con, "select * from itpd_industries")
 
-commodities_short_display <- commodities_short_out
+industries_out <- industries$industry_id
 
-# commodities ----
+industries_names_out <- industries$industry_descr
 
-commodities <- tbl(con, "commodities") %>%
-  select(section_code, commodity_code) %>%
-  collect()
+names(industries_out) <- paste(industries_out, industries_names_out, sep = " - ")
 
-commodities_display <- tbl(con, "commodities") %>%
-  select(commodity_code, commodity_name) %>%
-  collect()
+industries <- industries_out
 
-commodities_out <- commodities_display %>%
-  select(!!sym("commodity_code")) %>%
-  pull()
+usethis::use_data(industries, overwrite = T)
 
-commodities_names_out <- commodities_display %>%
-  select(!!sym("commodity_name")) %>%
-  pull()
-
-names(commodities_out) <- glue("{ commodities_out } - { commodities_names_out }")
-
-commodities_display <- commodities_out
-
-# output ----
-
-usethis::use_data(reporters_display, overwrite = T)
-
-usethis::use_data(sections_display, overwrite = T)
-
-usethis::use_data(commodities, overwrite = T)
-
-usethis::use_data(commodities_short_display, overwrite = T)
-
-usethis::use_data(commodities_display, overwrite = T)
-
-DBI::dbDisconnect(con)
+dbDisconnect(con)

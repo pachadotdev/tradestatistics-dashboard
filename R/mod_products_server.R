@@ -40,8 +40,8 @@ mod_products_server <- function(id) {
       }
 
       if (nchar(scode) == 2) {
-        s <- names(tradestatisticsshiny::sections_display[
-          tradestatisticsshiny::sections_display == scode
+        s <- names(tradestatisticsshiny::sectors[
+          tradestatisticsshiny::sectors == scode
         ])
         if (length(s) > 0 && !is.na(s) && nchar(s) > 0) {
           return(gsub(".* - ", "", s))
@@ -620,10 +620,9 @@ mod_products_server <- function(id) {
 
     updateSelectizeInput(session, "s",
       choices = list(
-        "HS Sections" = tradestatisticsshiny::sections_display,
-        "HS Commodities" = tradestatisticsshiny::commodities_short_display
+        "Sectors" = tradestatisticsshiny::sectors
       ),
-      selected = "01",
+      selected = "1",
       server = TRUE
     )
 

@@ -20,13 +20,13 @@ mod_countries_server <- function(id) {
       return(y)
     })
 
-    inp_r <- reactive({
-      input$r
-    }) # reporter
+    inp_i <- reactive({
+      input$i
+    }) # importer
     
-    inp_p <- reactive({
-      input$p
-    }) # partner
+    inp_e <- reactive({
+      input$e
+    }) # exporter
 
     inp_t <- reactive({
       input$t
@@ -42,26 +42,52 @@ mod_countries_server <- function(id) {
     tbl_agg <- reactive(paste0(inp_t(), "_imp_exp"))
     tbl_dtl <- reactive(inp_t())
 
-    # Human-readable reporter/partner names for glue templates. Fallback to
+    # Update year slider based on available data in the selected table ----
+    observeEvent(input$t, {
+      tbl <- inp_t()
+      yr_range <- tryCatch(
+        pool::dbGetQuery(con, sprintf(
+          "SELECT MIN(year) AS min_yr, MAX(year) AS max_yr FROM %s",
+          tbl
+        )),
+        error = function(e) NULL
+      )
+      if (!is.null(yr_range) && nrow(yr_range) == 1 && !is.na(yr_range$min_yr)) {
+        min_yr <- as.integer(yr_range$min_yr)
+        max_yr <- as.integer(yr_range$max_yr)
+        cur_min <- min(input$y[1], input$y[2])
+        cur_max <- max(input$y[1], input$y[2])
+        updateSliderInput(session, "y",
+          min   = min_yr,
+          max   = max_yr,
+          value = c(
+            max(min_yr, min(cur_min, max_yr)),
+            min(max_yr, max(cur_max, min_yr))
+          )
+        )
+      }
+    }, ignoreInit = TRUE)
+
+    # Human-readable importer/exporter names for glue templates. Fallback to
     # the code when no display name is available.
     rname <- eventReactive(input$go, {
-      out <- names(tradestatisticsshiny::reporters_display[tradestatisticsshiny::reporters_display == inp_r()])
+      out <- names(tradestatisticsshiny::countries[tradestatisticsshiny::countries == inp_i()])
       if (length(out) == 0 || is.na(out) || nchar(out) == 0) {
-        return(inp_r())
+        return(inp_i())
       }
       out
     })
 
     pname <- eventReactive(input$go, {
-      out <- names(tradestatisticsshiny::reporters_display[tradestatisticsshiny::reporters_display == inp_p()])
+      out <- names(tradestatisticsshiny::countries[tradestatisticsshiny::countries == inp_e()])
       if (length(out) == 0 || is.na(out) || nchar(out) == 0) {
-        return(inp_p())
+        return(inp_e())
       }
       out
     })
 
     title <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }: Multilateral trade { min(inp_y()) } - { max(inp_y()) }")
       } else {
         glue("{ r_add_upp_the(rname()) } { rname() } and { r_add_the(pname()) } { pname() }: Bilateral trade { min(inp_y()) } - { max(inp_y()) }")
@@ -76,38 +102,38 @@ mod_countries_server <- function(id) {
       session$sendCustomMessage("showProgress", list(text = "Loading data..."))
 
       years <- inp_y()
-      reporter <- inp_r()
-      partner <- inp_p()
+      importer <- inp_i()
+      exporter <- inp_e()
       min_yr <- as.integer(min(years))
       max_yr <- as.integer(max(years))
-      r <- gsub("'", "''", reporter)
+      e <- gsub("'", "''", importer)
 
-      if (partner == "ALL") {
+      if (exporter == "ALL") {
         d_exp <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_value_usd_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s'
            GROUP BY year",
-          tbl_agg(), min_yr, max_yr, r
+          tbl_agg(), min_yr, max_yr, e
         )))
         d_imp <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_value_usd_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s'
            GROUP BY year",
-          tbl_agg(), min_yr, max_yr, r
+          tbl_agg(), min_yr, max_yr, e
         )))
       } else {
-        p <- gsub("'", "''", partner)
+        i <- gsub("'", "''", exporter)
         d_exp <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_value_usd_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic = '%s'
            GROUP BY year",
-          tbl_agg(), min_yr, max_yr, r, p
+          tbl_agg(), min_yr, max_yr, e, i
         )))
         d_imp <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_value_usd_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s'
            GROUP BY year",
-          tbl_agg(), min_yr, max_yr, r, p
+          tbl_agg(), min_yr, max_yr, e, i
         )))
       }
 
@@ -118,35 +144,35 @@ mod_countries_server <- function(id) {
       d[, trade_value_usd_imp := trade_value_usd_imp * 1e6]
       return(d)
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     df_dtl <- reactive({
       years <- inp_y()
-      reporter <- inp_r()
-      partner <- inp_p()
+      importer <- inp_i()
+      exporter <- inp_e()
       min_yr <- as.integer(min(years))
       max_yr <- as.integer(max(years))
-      r <- gsub("'", "''", reporter)
+      e <- gsub("'", "''", importer)
 
       # Get sector reference data
       sectors_ref <- setDT(pool::dbGetQuery(con,
         "select industry_descr, industry_id from itpd_industries"
       ))
 
-      if (partner == "ALL") {
+      if (exporter == "ALL") {
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT * FROM %s WHERE year BETWEEN %d AND %d AND (importer_iso3_dynamic = '%s' OR exporter_iso3_dynamic = '%s')",
-          tbl_dtl(), min_yr, max_yr, r, r
+          tbl_dtl(), min_yr, max_yr, e, e
         )))
       } else {
-        p <- gsub("'", "''", partner)
+        i <- gsub("'", "''", exporter)
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT * FROM %s WHERE year BETWEEN %d AND %d AND (
             (importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s') OR
             (importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s')
           )",
-          tbl_dtl(), min_yr, max_yr, r, p, p, r
+          tbl_dtl(), min_yr, max_yr, e, i, i, e
         )))
       }
 
@@ -154,7 +180,7 @@ mod_countries_server <- function(id) {
       d[, trade := trade * 1e6]
       return(d)
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     ## Trade ----
@@ -238,30 +264,30 @@ mod_countries_server <- function(id) {
     trd_rankings <- eventReactive(input$go, {
       min_max_y <- c(min(inp_y()), max(inp_y()))
       year_in <- paste(as.integer(min_max_y), collapse = ",")
-      r <- gsub("'", "''", inp_r())
+      e <- gsub("'", "''", inp_i())
 
-      # Exports: reporter is exporter_iso3_dynamic, partner is importer_iso3_dynamic
+      # Exports: importer is exporter_iso3_dynamic, exporter is importer_iso3_dynamic
       d_exp <- setDT(pool::dbGetQuery(con, sprintf(
-        "SELECT year, importer_iso3_dynamic AS partner, SUM(trade) AS trade_value_usd_exp
+        "SELECT year, importer_iso3_dynamic AS exporter, SUM(trade) AS trade_value_usd_exp
          FROM %s WHERE year IN (%s) AND exporter_iso3_dynamic = '%s'
          GROUP BY year, importer_iso3_dynamic",
-        tbl_agg(), year_in, r
+        tbl_agg(), year_in, e
       )))
 
-      # Imports: reporter is importer_iso3_dynamic, partner is exporter_iso3_dynamic
+      # Imports: importer is importer_iso3_dynamic, exporter is exporter_iso3_dynamic
       d_imp <- setDT(pool::dbGetQuery(con, sprintf(
-        "SELECT year, exporter_iso3_dynamic AS partner, SUM(trade) AS trade_value_usd_imp
+        "SELECT year, exporter_iso3_dynamic AS exporter, SUM(trade) AS trade_value_usd_imp
          FROM %s WHERE year IN (%s) AND importer_iso3_dynamic = '%s'
          GROUP BY year, exporter_iso3_dynamic",
-        tbl_agg(), year_in, r
+        tbl_agg(), year_in, e
       )))
 
-      d <- merge(d_exp, d_imp, by = c("year", "partner"), all = TRUE)
+      d <- merge(d_exp, d_imp, by = c("year", "exporter"), all = TRUE)
       d[is.na(trade_value_usd_exp), trade_value_usd_exp := 0]
       d[is.na(trade_value_usd_imp), trade_value_usd_imp := 0]
       d[, trade_value_usd_exp := trade_value_usd_exp * 1e6]
       d[, trade_value_usd_imp := trade_value_usd_imp * 1e6]
-      setnames(d, "partner", "exporter_iso3_dynamic")
+      setnames(d, "exporter", "exporter_iso3_dynamic")
 
       d[, trd_value_usd_bal := trade_value_usd_exp + trade_value_usd_imp]
       d[, bal_rank := frankv(trd_value_usd_bal, order = -1L, ties.method = "dense"), by = .(year)]
@@ -273,12 +299,12 @@ mod_countries_server <- function(id) {
 
     # Helper function to get ranking with tie information
     get_ranking_with_ties <- function(year_val) {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         return("N/A") # No ranking for multilateral trade
       }
 
       rankings_data <- trd_rankings()[year == year_val]
-      partner_iso_val <- inp_p()
+      partner_iso_val <- inp_e()
 
       partner_rank <- rankings_data[exporter_iso3_dynamic == partner_iso_val, bal_rank]
 
@@ -327,7 +353,7 @@ mod_countries_server <- function(id) {
     })
 
     trd_rankings_exp_share_min_yr <- eventReactive(input$go, {
-      result <- trd_rankings()[year == min(inp_y()) & exporter_iso3_dynamic == inp_p(), exp_share]
+      result <- trd_rankings()[year == min(inp_y()) & exporter_iso3_dynamic == inp_e(), exp_share]
       if (length(result) == 0 || is.na(result)) return(0)
       return(result)
     })
@@ -341,7 +367,7 @@ mod_countries_server <- function(id) {
     })
 
     trd_rankings_exp_share_max_yr <- eventReactive(input$go, {
-      result <- trd_rankings()[year == max(inp_y()) & exporter_iso3_dynamic == inp_p(), exp_share]
+      result <- trd_rankings()[year == max(inp_y()) & exporter_iso3_dynamic == inp_e(), exp_share]
       if (length(result) == 0 || is.na(result)) return(0)
       return(result)
     })
@@ -355,7 +381,7 @@ mod_countries_server <- function(id) {
     })
 
     trd_rankings_imp_share_min_yr <- eventReactive(input$go, {
-      result <- trd_rankings()[year == min(inp_y()) & exporter_iso3_dynamic == inp_p(), imp_share]
+      result <- trd_rankings()[year == min(inp_y()) & exporter_iso3_dynamic == inp_e(), imp_share]
       if (length(result) == 0 || is.na(result)) return(0)
       return(result)
     })
@@ -369,7 +395,7 @@ mod_countries_server <- function(id) {
     })
 
     trd_rankings_imp_share_max_yr <- eventReactive(input$go, {
-      result <- trd_rankings()[year == max(inp_y()) & exporter_iso3_dynamic == inp_p(), imp_share]
+      result <- trd_rankings()[year == max(inp_y()) & exporter_iso3_dynamic == inp_e(), imp_share]
       if (length(result) == 0 || is.na(result)) return(0)
       return(result)
     })
@@ -384,10 +410,10 @@ mod_countries_server <- function(id) {
 
     ### GDP Context Functions ----
 
-    # Get GDP data for the reporter country
+    # Get GDP data for the importer country
     
     # gdp_data <- eventReactive(input$go, {
-    #   r <- gsub("'", "''", inp_r())
+    #   e <- gsub("'", "''", inp_i())
     #   min_yr <- as.integer(min(inp_y()))
     #   max_yr <- as.integer(max(inp_y()))
 
@@ -395,14 +421,14 @@ mod_countries_server <- function(id) {
     #     "SELECT year, MAX(gdp_wdi_cur_o) AS gdp_exp
     #      FROM dgd WHERE iso3_dynamic_o = '%s' AND year BETWEEN %d AND %d
     #      GROUP BY year",
-    #     r, min_yr, max_yr
+    #     e, min_yr, max_yr
     #   )))
 
     #   gdp_imp <- setDT(pool::dbGetQuery(con, sprintf(
     #     "SELECT year, MAX(gdp_wdi_cur_d) AS gdp_imp
     #      FROM dgd WHERE iso3_dynamic_d = '%s' AND year BETWEEN %d AND %d
     #      GROUP BY year",
-    #     r, min_yr, max_yr
+    #     e, min_yr, max_yr
     #   )))
 
     #   d <- merge(gdp_exp, gdp_imp, by = "year", all = TRUE)
@@ -455,34 +481,34 @@ mod_countries_server <- function(id) {
     #   return(round((imp_val / gdp_val) * 100, 2))
     # })
 
-    # Get total exports for bilateral context (when partner != "ALL")
+    # Get total exports for bilateral context (when exporter != "ALL")
     total_exp_val_min_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         return(exp_val_min_yr())
       }
 
       min_year <- min(inp_y())
-      reporter <- inp_r()
+      importer <- inp_i()
 
       d <- setDT(pool::dbGetQuery(con, sprintf(
         "SELECT * FROM %s WHERE year = %d AND exporter_iso3_dynamic = '%s'",
-        tbl_agg(), as.integer(min_year), gsub("'", "''", reporter)
+        tbl_agg(), as.integer(min_year), gsub("'", "''", importer)
       )))
 
       return(d[, sum(trade, na.rm = TRUE)] * 1e6)
     })
 
     total_exp_val_max_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         return(exp_val_max_yr())
       }
 
       max_year <- max(inp_y())
-      reporter <- inp_r()
+      importer <- inp_i()
 
       d <- setDT(pool::dbGetQuery(con, sprintf(
         "SELECT * FROM %s WHERE year = %d AND exporter_iso3_dynamic = '%s'",
-        tbl_agg(), as.integer(max_year), gsub("'", "''", reporter)
+        tbl_agg(), as.integer(max_year), gsub("'", "''", importer)
       )))
 
       return(d[, sum(trade, na.rm = TRUE)] * 1e6)
@@ -520,34 +546,34 @@ mod_countries_server <- function(id) {
     #   return(round((total_exp_val / gdp_val) * 100, 2))
     # })
 
-    # Get total imports for bilateral context (when partner != "ALL")
+    # Get total imports for bilateral context (when exporter != "ALL")
     total_imp_val_min_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         return(imp_val_min_yr())
       }
 
       min_year <- min(inp_y())
-      reporter <- inp_r()
+      importer <- inp_i()
 
       d <- setDT(pool::dbGetQuery(con, sprintf(
         "SELECT * FROM %s WHERE year = %d AND importer_iso3_dynamic = '%s'",
-        tbl_agg(), as.integer(min_year), gsub("'", "''", reporter)
+        tbl_agg(), as.integer(min_year), gsub("'", "''", importer)
       )))
 
       return(d[, sum(trade, na.rm = TRUE)] * 1e6)
     })
 
     total_imp_val_max_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         return(imp_val_max_yr())
       }
 
       max_year <- max(inp_y())
-      reporter <- inp_r()
+      importer <- inp_i()
 
       d <- setDT(pool::dbGetQuery(con, sprintf(
         "SELECT * FROM %s WHERE year = %d AND importer_iso3_dynamic = '%s'",
-        tbl_agg(), as.integer(max_year), gsub("'", "''", reporter)
+        tbl_agg(), as.integer(max_year), gsub("'", "''", importer)
       )))
 
       return(d[, sum(trade, na.rm = TRUE)] * 1e6)
@@ -589,7 +615,7 @@ mod_countries_server <- function(id) {
 
     trd_smr_txt_exp <- eventReactive(input$go, {
       # Base text - more concise and readable
-      base_text <- if (inp_p() == "ALL") {
+      base_text <- if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }'s exports to the world { exports_growth_increase_decrease() } from { exp_val_min_yr_2() } in { min(inp_y()) } to { exp_val_max_yr_2() } in { max(inp_y()) } ({ exports_growth_2() } annual { exports_growth_increase_decrease_2() }).")
       } else {
         # Split into two shorter sentences for better readability
@@ -604,7 +630,7 @@ mod_countries_server <- function(id) {
       # max_pct <- exp_gdp_pct_max_yr()
 
       # if (!is.na(max_pct) && max_pct > 0) {
-      #   if (inp_p() == "ALL") {
+      #   if (inp_e() == "ALL") {
       #     gdp_context <- glue(" The total exports in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
       #   } else {
       #     gdp_context <- glue(" Exports to { r_add_the(pname()) } { pname() } in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
@@ -618,7 +644,7 @@ mod_countries_server <- function(id) {
 
     trd_smr_txt_imp <- eventReactive(input$go, {
       # Base text - more concise and readable
-      base_text <- if (inp_p() == "ALL") {
+      base_text <- if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }'s imports from the world { imports_growth_increase_decrease() } from { imp_val_min_yr_2() } in { min(inp_y()) } to { imp_val_max_yr_2() } in { max(inp_y()) } ({ imports_growth_2() } annual { imports_growth_increase_decrease_2() }).")
       } else {
         # Split into two shorter sentences for better readability
@@ -633,7 +659,7 @@ mod_countries_server <- function(id) {
       # max_pct <- imp_gdp_pct_max_yr()
 
       # if (!is.na(max_pct) && max_pct > 0) {
-      #   if (inp_p() == "ALL") {
+      #   if (inp_e() == "ALL") {
       #     gdp_context <- glue(" The total imports in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
       #   } else {
       #     gdp_context <- glue(" Imports from { r_add_the(pname()) } { pname() } in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
@@ -646,7 +672,7 @@ mod_countries_server <- function(id) {
     })
 
     trd_exc_columns_title <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }: Imports and Exports { min(inp_y()) } - { max(inp_y()) }")
       } else {
         glue("{ r_add_upp_the(rname()) } { rname() } and { r_add_the(pname()) } { pname() }: Bilateral trade { min(inp_y()) } - { max(inp_y()) }")
@@ -692,7 +718,7 @@ mod_countries_server <- function(id) {
         ))
 
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     ## Exports ----
@@ -700,7 +726,7 @@ mod_countries_server <- function(id) {
     ### Visual elements ----
 
     exp_tt_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("Exports of { r_add_the(rname()) } { rname() } to the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by product")
       } else {
         glue("Exports of { r_add_the(rname()) } { rname() } to { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by product")
@@ -709,7 +735,7 @@ mod_countries_server <- function(id) {
 
     # Export line chart: trade evolution over selected years
     trd_line_exp_tt <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }: Exports { min(inp_y()) } - { max(inp_y()) }")
       } else {
         glue("{ r_add_upp_the(rname()) } { rname() } exports to { r_add_the(pname()) } { pname() }: { min(inp_y()) } - { max(inp_y()) }")
@@ -717,27 +743,27 @@ mod_countries_server <- function(id) {
     })
 
     trd_line_exp <- reactive({
-      reporter <- inp_r()
-      partner  <- inp_p()
-      r        <- gsub("'", "''", reporter)
+      importer <- inp_i()
+      exporter  <- inp_e()
+      e        <- gsub("'", "''", importer)
       min_yr   <- as.integer(min(inp_y()))
       max_yr   <- as.integer(max(inp_y()))
 
-      if (partner == "ALL") {
+      if (exporter == "ALL") {
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, trade FROM itpde_exp
            WHERE exporter_iso3_dynamic = '%s' AND year BETWEEN %d AND %d
            ORDER BY year",
-          r, min_yr, max_yr
+          e, min_yr, max_yr
         )))
       } else {
-        p <- gsub("'", "''", partner)
+        i <- gsub("'", "''", exporter)
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, trade FROM itpde_imp_exp
            WHERE exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic = '%s'
              AND year BETWEEN %d AND %d
            ORDER BY year",
-          r, p, min_yr, max_yr
+          e, i, min_yr, max_yr
         )))
       }
 
@@ -748,7 +774,7 @@ mod_countries_server <- function(id) {
         po_labels(x = "Year", y = "Exports (USD billion)", title = trd_line_exp_tt()) |>
         po_tooltip("{year}: {trade} B")
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     exp_tt_min_yr <- eventReactive(input$go, {
@@ -756,17 +782,17 @@ mod_countries_server <- function(id) {
     })
 
     exp_tm_dtl_min_yr <- reactive({
-      reporter <- inp_r()
+      importer <- inp_i()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
       d <- p_aggregate_by_sector(
-        dtl[year == actual_min_yr & exporter_iso3_dynamic == reporter],
+        dtl[year == actual_min_yr & exporter_iso3_dynamic == importer],
         col = "trade", con = con
       )
       d2 <- p_colors(d, con = con)
       p_treemap(d, d2, title = exp_tt_min_yr())
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     exp_tt_max_yr <- eventReactive(input$go, {
@@ -774,17 +800,17 @@ mod_countries_server <- function(id) {
     })
 
     exp_tm_dtl_max_yr <- reactive({
-      reporter <- inp_r()
+      importer <- inp_i()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
       d <- p_aggregate_by_sector(
-        dtl[year == actual_max_yr & exporter_iso3_dynamic == reporter],
+        dtl[year == actual_max_yr & exporter_iso3_dynamic == importer],
         col = "trade", con = con
       )
       d2 <- p_colors(d, con = con)
       p_treemap(d, d2, title = exp_tt_max_yr())
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     ## Imports ----
@@ -792,7 +818,7 @@ mod_countries_server <- function(id) {
     ### Visual elements ----
 
     imp_tt_yr <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("Imports of { r_add_the(rname()) } { rname() } from the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by product")
       } else {
         glue("Imports of { r_add_the(rname()) } { rname() } from { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by product")
@@ -805,7 +831,7 @@ mod_countries_server <- function(id) {
 
     # Import line chart: trade evolution over selected years
     trd_line_imp_tt <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("{ r_add_upp_the(rname()) } { rname() }: Imports { min(inp_y()) } - { max(inp_y()) }")
       } else {
         glue("{ r_add_upp_the(rname()) } { rname() } imports from { r_add_the(pname()) } { pname() }: { min(inp_y()) } - { max(inp_y()) }")
@@ -813,27 +839,27 @@ mod_countries_server <- function(id) {
     })
 
     trd_line_imp <- reactive({
-      reporter <- inp_r()
-      partner  <- inp_p()
-      r        <- gsub("'", "''", reporter)
+      importer <- inp_i()
+      exporter  <- inp_e()
+      e        <- gsub("'", "''", importer)
       min_yr   <- as.integer(min(inp_y()))
       max_yr   <- as.integer(max(inp_y()))
 
-      if (partner == "ALL") {
+      if (exporter == "ALL") {
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, trade FROM itpde_imp
            WHERE importer_iso3_dynamic = '%s' AND year BETWEEN %d AND %d
            ORDER BY year",
-          r, min_yr, max_yr
+          e, min_yr, max_yr
         )))
       } else {
-        p <- gsub("'", "''", partner)
+        i <- gsub("'", "''", exporter)
         d <- setDT(pool::dbGetQuery(con, sprintf(
           "SELECT year, trade FROM itpde_imp_exp
            WHERE importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s'
              AND year BETWEEN %d AND %d
            ORDER BY year",
-          r, p, min_yr, max_yr
+          e, i, min_yr, max_yr
         )))
       }
 
@@ -844,21 +870,21 @@ mod_countries_server <- function(id) {
         po_labels(x = "Year", y = "Imports (USD billion)", title = trd_line_imp_tt()) |>
         po_tooltip("{year}: {trade} B")
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     imp_tm_dtl_min_yr <- reactive({
-      reporter <- inp_r()
+      importer <- inp_i()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
       d <- p_aggregate_by_sector(
-        dtl[year == actual_min_yr & importer_iso3_dynamic == reporter],
+        dtl[year == actual_min_yr & importer_iso3_dynamic == importer],
         col = "trade", con = con
       )
       d2 <- p_colors(d, con = con)
       p_treemap(d, d2, title = imp_tt_min_yr())
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     imp_tt_max_yr <- eventReactive(input$go, {
@@ -866,11 +892,11 @@ mod_countries_server <- function(id) {
     })
 
     imp_tm_dtl_max_yr <- reactive({
-      reporter <- inp_r()
+      importer <- inp_i()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
       d <- p_aggregate_by_sector(
-        dtl[year == actual_max_yr & importer_iso3_dynamic == reporter],
+        dtl[year == actual_max_yr & importer_iso3_dynamic == importer],
         col = "trade", con = con
       )
       d2 <- p_colors(d, con = con)
@@ -878,16 +904,14 @@ mod_countries_server <- function(id) {
       session$sendCustomMessage("hideProgress", list())
       return(out)
     }) |>
-      bindCache(inp_y(), inp_r(), inp_p(), inp_t()) |>
+      bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
 
     ## Dynamic / server side selectors ----
 
-    observeEvent(input$r, {
-      updateSelectizeInput(session, "p",
-        choices = sort(tradestatisticsshiny::reporters_display[
-          tradestatisticsshiny::reporters_display != input$r
-        ]),
+    observeEvent(input$i, {
+      updateSelectizeInput(session, "e",
+        choices = c(`All countries` = "ALL", tradestatisticsshiny::countries[tradestatisticsshiny::countries != input$i]),
         selected = "ALL",
         server = TRUE
       )
@@ -926,7 +950,7 @@ mod_countries_server <- function(id) {
     ### Trade ----
 
     output$trd_stl <- eventReactive(input$go, {
-      if (inp_p() == "ALL") {
+      if (inp_e() == "ALL") {
         glue("Total multilateral Exports and Imports")
       } else {
         glue("Total bilateral Exports and Imports")
@@ -987,7 +1011,7 @@ mod_countries_server <- function(id) {
 
     output$dwn_dtl_pre <- downloadHandler(
       filename = function() {
-        glue("{ inp_r() }_{ inp_p() }_{ min(inp_y()) }_{ max(inp_y()) }_detailed.{ inp_fmt() }")
+        glue("{ inp_i() }_{ inp_e() }_{ min(inp_y()) }_{ max(inp_y()) }_detailed.{ inp_fmt() }")
       },
       content = function(filename) {
         export(df_dtl(), filename)
@@ -996,7 +1020,7 @@ mod_countries_server <- function(id) {
 
     output$dwn_agg_pre <- downloadHandler(
       filename = function() {
-        glue("{ inp_r() }_{ inp_p() }_{ min(inp_y()) }_{ max(inp_y()) }_aggregated.{ inp_fmt() }")
+        glue("{ inp_i() }_{ inp_e() }_{ min(inp_y()) }_{ max(inp_y()) }_aggregated.{ inp_fmt() }")
       },
       content = function(filename) {
         export(df_agg(), filename)

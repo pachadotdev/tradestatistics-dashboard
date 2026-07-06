@@ -26,21 +26,22 @@ mod_products_ui <- function(id) {
             col_6(
               selectInput(
                 ns("s"),
-                "Section / Commodity",
-                choices = list(
-                  "HS Sections" = tradestatisticsshiny::sections_display
-                ),
-                selected = "01",
+                "Sectors",
+                choices = list("Sectors" = tradestatisticsshiny::sectors),
+                selected = "1",
                 selectize = TRUE,
                 width = "100%"
               )
             ),
             col_3(
               selectInput(
-                ns("d"),
-                "Convert dollars to a fixed year",
-                choices = c("No", available_yrs_deflator()),
-                selected = "",
+                ns("t"),
+                "Dataset",
+                choices = c(
+                  `International Trade and Production Database for Estimation (ITPD-E)` = "itpde",
+                  `International Trade and Production Database for Simulation (ITPD-S)` = "itpds"
+                ),
+                selected = "itpde",
                 selectize = TRUE,
                 width = "100%"
               )

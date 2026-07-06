@@ -25,11 +25,9 @@ mod_countries_ui <- function(id) {
             ),
             col_3(
               selectInput(
-                ns("r"),
-                "Reporter",
-                choices = sort(tradestatisticsshiny::reporters_display[
-                  tradestatisticsshiny::reporters_display != "ALL"
-                ]),
+                ns("i"),
+                "Importer",
+                choices = tradestatisticsshiny::countries[tradestatisticsshiny::countries != "ALL"],
                 selected = "GBR",
                 selectize = TRUE,
                 width = "100%"
@@ -37,13 +35,10 @@ mod_countries_ui <- function(id) {
             ),
             col_3(
               selectInput(
-                ns("p"),
-                "Partner",
+                ns("e"),
+                "Exporter",
                 choices = c(
-                  "All countries" = "ALL",
-                  sort(tradestatisticsshiny::reporters_display[
-                    tradestatisticsshiny::reporters_display != "ALL"
-                  ])
+                  "All countries" = "ALL", tradestatisticsshiny::countries[tradestatisticsshiny::countries != "ALL"]
                 ),
                 selected = "ALL",
                 selectize = TRUE,
