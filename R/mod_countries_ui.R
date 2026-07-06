@@ -128,13 +128,10 @@ mod_countries_ui <- function(id) {
           br(),
           card(
             htmlOutput(ns("exp_tt_yr"), container = tags$h2),
-            p("These charts show export destinations (bar charts) and export composition by product category (treemaps) for the first and last year."),
+            p("These charts show export evolution over the selected years (line chart) and export composition by product category (treemaps) for the first and last year."),
             fluidRow(
-              col_6(
-                d3po_output(ns("exp_col_min_yr_usd"), height = "500px")
-              ),
-              col_6(
-                d3po_output(ns("exp_col_max_yr_usd"), height = "500px")
+              col_12(
+                d3po_output(ns("trd_line_exp"), height = "400px")
               ),
               col_6(
                 d3po_output(ns("exp_tm_dtl_min_yr"), height = "500px")
@@ -156,13 +153,10 @@ mod_countries_ui <- function(id) {
           br(),
           card(
             htmlOutput(ns("imp_tt_yr"), container = tags$h2),
-            p("These charts show import sources (bar charts) and import composition by product category (treemaps) for the first and last year."),
+            p("These charts show import evolution over the selected years (line chart) and import composition by product category (treemaps) for the first and last year."),
             fluidRow(
-              col_6(
-                d3po_output(ns("imp_col_min_yr_usd"), height = "500px")
-              ),
-              col_6(
-                d3po_output(ns("imp_col_max_yr_usd"), height = "500px")
+              col_12(
+                d3po_output(ns("trd_line_imp"), height = "400px")
               ),
               col_6(
                 d3po_output(ns("imp_tm_dtl_min_yr"), height = "500px")
