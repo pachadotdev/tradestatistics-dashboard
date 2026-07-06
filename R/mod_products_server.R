@@ -23,9 +23,7 @@ mod_products_server <- function(id) {
     inp_s <- reactive({
       input$s
     }) # section/commodity
-    inp_d <- reactive({
-      input$d
-    }) # adjust dollar
+    
     inp_fmt <- reactive({
       input$fmt
     }) # format
@@ -93,7 +91,7 @@ mod_products_server <- function(id) {
 
       return(d)
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     df_dtl <- reactive({
@@ -166,7 +164,7 @@ mod_products_server <- function(id) {
 
       return(d)
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d(), "yrpc") |>
+      bindCache(inp_y(), inp_s(), inp_t(), "yrpc") |>
       bindEvent(input$go)
 
     ## Trade ----
@@ -281,7 +279,7 @@ mod_products_server <- function(id) {
         ))
 
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     ## Exports ----
@@ -347,7 +345,7 @@ mod_products_server <- function(id) {
         po_tooltip("{country_name}: {trade_value_usd_imp} billion")
 
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     exp_col_max_yr_usd <- reactive({
@@ -395,7 +393,7 @@ mod_products_server <- function(id) {
         po_tooltip("{country_name}: {trade_value_usd_imp} billion")
 
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     exp_tt_min_yr <- eventReactive(input$go, {
@@ -418,7 +416,7 @@ mod_products_server <- function(id) {
 
       od_treemap(d, d2, title = exp_tt_min_yr())
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     exp_tt_max_yr <- eventReactive(input$go, {
@@ -441,7 +439,7 @@ mod_products_server <- function(id) {
 
       od_treemap(d, d2, title = exp_tt_max_yr())
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     ## Imports ----
@@ -507,7 +505,7 @@ mod_products_server <- function(id) {
         po_tooltip("{country_name}: {trade_value_usd_imp} billion")
 
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     imp_col_max_yr_usd <- reactive({
@@ -555,7 +553,7 @@ mod_products_server <- function(id) {
         po_tooltip("{country_name}: {trade_value_billion} billion")
 
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     imp_tt_min_yr <- eventReactive(input$go, {
@@ -578,7 +576,7 @@ mod_products_server <- function(id) {
 
       od_treemap(d, d2, title = imp_tt_min_yr())
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     imp_tt_max_yr <- eventReactive(input$go, {
@@ -605,7 +603,7 @@ mod_products_server <- function(id) {
 
       return(out)
     }) |>
-      bindCache(inp_y(), inp_s(), inp_d()) |>
+      bindCache(inp_y(), inp_s(), inp_t()) |>
       bindEvent(input$go)
 
     # Additional processing functions can be added here

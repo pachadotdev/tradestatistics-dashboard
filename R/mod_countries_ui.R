@@ -10,7 +10,7 @@ mod_countries_ui <- function(id) {
         col_12(
           h2("Filter"),
           fluidRow(
-            col_4(
+            col_3(
               sliderInput(
                 ns("y"),
                 "Years",
@@ -23,7 +23,7 @@ mod_countries_ui <- function(id) {
                 width = "100%"
               )
             ),
-            col_4(
+            col_3(
               selectInput(
                 ns("r"),
                 "Reporter",
@@ -35,7 +35,7 @@ mod_countries_ui <- function(id) {
                 width = "100%"
               )
             ),
-            col_4(
+            col_3(
               selectInput(
                 ns("p"),
                 "Partner",
@@ -46,6 +46,19 @@ mod_countries_ui <- function(id) {
                   ])
                 ),
                 selected = "ALL",
+                selectize = TRUE,
+                width = "100%"
+              )
+            ),
+            col_3(
+              selectInput(
+                ns("t"),
+                "Dataset",
+                choices = c(
+                  `International Trade and Production Database for Estimation (ITPD-E)` = "itpde",
+                  `International Trade and Production Database for Simulation (ITPD-S)` = "itpds"
+                ),
+                selected = "itpde",
                 selectize = TRUE,
                 width = "100%"
               )
