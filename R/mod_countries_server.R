@@ -385,73 +385,75 @@ mod_countries_server <- function(id) {
     ### GDP Context Functions ----
 
     # Get GDP data for the reporter country
-    gdp_data <- eventReactive(input$go, {
-      r <- gsub("'", "''", inp_r())
-      min_yr <- as.integer(min(inp_y()))
-      max_yr <- as.integer(max(inp_y()))
+    
+    # gdp_data <- eventReactive(input$go, {
+    #   r <- gsub("'", "''", inp_r())
+    #   min_yr <- as.integer(min(inp_y()))
+    #   max_yr <- as.integer(max(inp_y()))
 
-      gdp_exp <- setDT(pool::dbGetQuery(con, sprintf(
-        "SELECT year, MAX(gdp_pwt_cur_o) AS gdp_exp
-         FROM dgd WHERE iso3_dynamic_o = '%s' AND year BETWEEN %d AND %d
-         GROUP BY year",
-        r, min_yr, max_yr
-      )))
+    #   gdp_exp <- setDT(pool::dbGetQuery(con, sprintf(
+    #     "SELECT year, MAX(gdp_wdi_cur_o) AS gdp_exp
+    #      FROM dgd WHERE iso3_dynamic_o = '%s' AND year BETWEEN %d AND %d
+    #      GROUP BY year",
+    #     r, min_yr, max_yr
+    #   )))
 
-      gdp_imp <- setDT(pool::dbGetQuery(con, sprintf(
-        "SELECT year, MAX(gdp_pwt_cur_d) AS gdp_imp
-         FROM dgd WHERE iso3_dynamic_d = '%s' AND year BETWEEN %d AND %d
-         GROUP BY year",
-        r, min_yr, max_yr
-      )))
+    #   gdp_imp <- setDT(pool::dbGetQuery(con, sprintf(
+    #     "SELECT year, MAX(gdp_wdi_cur_d) AS gdp_imp
+    #      FROM dgd WHERE iso3_dynamic_d = '%s' AND year BETWEEN %d AND %d
+    #      GROUP BY year",
+    #     r, min_yr, max_yr
+    #   )))
 
-      merge(gdp_exp, gdp_imp, by = "year", all = TRUE)
-    })
+    #   d <- merge(gdp_exp, gdp_imp, by = "year", all = TRUE)
+    #   d[, gdp_exp := gdp_exp * 1e6]
+    #   d[, gdp_imp := gdp_imp * 1e6]
+    #   d
+    # })
 
     # Calculate trade as percentage of GDP for exports
-    exp_gdp_pct_min_yr <- eventReactive(input$go, {
-      gdp <- gdp_data()
-      valid_yrs <- gdp[!is.na(gdp_exp) & gdp_exp > 0, year]
-      if (length(valid_yrs) == 0) return(NA)
-      gdp_val <- gdp[year == min(valid_yrs), gdp_exp]
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
-      exp_val <- exp_val_min_yr()
-      if (length(exp_val) == 0 || is.na(exp_val) || exp_val <= 0) return(NA)
-      return(round((exp_val / gdp_val) * 100, 2))
-    })
 
-    exp_gdp_pct_max_yr <- eventReactive(input$go, {
-      gdp <- gdp_data()
-      valid_yrs <- gdp[!is.na(gdp_exp) & gdp_exp > 0, year]
-      if (length(valid_yrs) == 0) return(NA)
-      gdp_val <- gdp[year == max(valid_yrs), gdp_exp]
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
-      exp_val <- exp_val_max_yr()
-      if (length(exp_val) == 0 || is.na(exp_val) || exp_val <= 0) return(NA)
-      return(round((exp_val / gdp_val) * 100, 2))
-    })
+    # exp_gdp_pct_min_yr <- eventReactive(input$go, {
+    #   gdp <- gdp_data()
+    #   valid_yrs <- gdp[!is.na(gdp_exp) & gdp_exp > 0, year]
+    #   if (length(valid_yrs) == 0) return(NA)
+    #   gdp_val <- gdp[year == min(valid_yrs), gdp_exp]
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
+    #   exp_val <- exp_val_min_yr()
+    #   if (length(exp_val) == 0 || is.na(exp_val) || exp_val <= 0) return(NA)
+    #   return(round((exp_val / gdp_val) * 100, 2))
+    # })
+
+    # exp_gdp_pct_max_yr <- eventReactive(input$go, {
+    #   gdp <- gdp_data()
+    #   gdp_val <- gdp[year == max(inp_y()), gdp_exp]
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
+    #   exp_val <- exp_val_max_yr()
+    #   if (length(exp_val) == 0 || is.na(exp_val) || exp_val <= 0) return(NA)
+    #   return(round((exp_val / gdp_val) * 100, 2))
+    # })
 
     # Calculate trade as percentage of GDP for imports
-    imp_gdp_pct_min_yr <- eventReactive(input$go, {
-      gdp <- gdp_data()
-      valid_yrs <- gdp[!is.na(gdp_imp) & gdp_imp > 0, year]
-      if (length(valid_yrs) == 0) return(NA)
-      gdp_val <- gdp[year == min(valid_yrs), gdp_imp]
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
-      imp_val <- imp_val_min_yr()
-      if (length(imp_val) == 0 || is.na(imp_val) || imp_val <= 0) return(NA)
-      return(round((imp_val / gdp_val) * 100, 2))
-    })
+    
+    # imp_gdp_pct_min_yr <- eventReactive(input$go, {
+    #   gdp <- gdp_data()
+    #   valid_yrs <- gdp[!is.na(gdp_imp) & gdp_imp > 0, year]
+    #   if (length(valid_yrs) == 0) return(NA)
+    #   gdp_val <- gdp[year == min(valid_yrs), gdp_imp]
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
+    #   imp_val <- imp_val_min_yr()
+    #   if (length(imp_val) == 0 || is.na(imp_val) || imp_val <= 0) return(NA)
+    #   return(round((imp_val / gdp_val) * 100, 2))
+    # })
 
-    imp_gdp_pct_max_yr <- eventReactive(input$go, {
-      gdp <- gdp_data()
-      valid_yrs <- gdp[!is.na(gdp_imp) & gdp_imp > 0, year]
-      if (length(valid_yrs) == 0) return(NA)
-      gdp_val <- gdp[year == max(valid_yrs), gdp_imp]
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
-      imp_val <- imp_val_max_yr()
-      if (length(imp_val) == 0 || is.na(imp_val) || imp_val <= 0) return(NA)
-      return(round((imp_val / gdp_val) * 100, 2))
-    })
+    # imp_gdp_pct_max_yr <- eventReactive(input$go, {
+    #   gdp <- gdp_data()
+    #   gdp_val <- gdp[year == max(inp_y()), gdp_imp]
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) return(NA)
+    #   imp_val <- imp_val_max_yr()
+    #   if (length(imp_val) == 0 || is.na(imp_val) || imp_val <= 0) return(NA)
+    #   return(round((imp_val / gdp_val) * 100, 2))
+    # })
 
     # Get total exports for bilateral context (when partner != "ALL")
     total_exp_val_min_yr <- eventReactive(input$go, {
@@ -487,35 +489,36 @@ mod_countries_server <- function(id) {
     })
 
     # Calculate total exports as percentage of GDP for bilateral context
-    total_exp_gdp_pct_min_yr <- eventReactive(input$go, {
-      gdp_val <- gdp_data()[year == min(inp_y()), gdp_exp]
 
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
-        return(NA)
-      }
+    # total_exp_gdp_pct_min_yr <- eventReactive(input$go, {
+    #   gdp_val <- gdp_data()[year == min(inp_y()), gdp_exp]
 
-      total_exp_val <- total_exp_val_min_yr()
-      if (is.na(total_exp_val) || total_exp_val <= 0) {
-        return(NA)
-      }
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      return(round((total_exp_val / gdp_val) * 100, 2))
-    })
+    #   total_exp_val <- total_exp_val_min_yr()
+    #   if (is.na(total_exp_val) || total_exp_val <= 0) {
+    #     return(NA)
+    #   }
 
-    total_exp_gdp_pct_max_yr <- eventReactive(input$go, {
-      gdp_val <- gdp_data()[year == max(inp_y()), gdp_exp]
+    #   return(round((total_exp_val / gdp_val) * 100, 2))
+    # })
 
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
-        return(NA)
-      }
+    # total_exp_gdp_pct_max_yr <- eventReactive(input$go, {
+    #   gdp_val <- gdp_data()[year == max(inp_y()), gdp_exp]
 
-      total_exp_val <- total_exp_val_max_yr()
-      if (is.na(total_exp_val) || total_exp_val <= 0) {
-        return(NA)
-      }
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      return(round((total_exp_val / gdp_val) * 100, 2))
-    })
+    #   total_exp_val <- total_exp_val_max_yr()
+    #   if (is.na(total_exp_val) || total_exp_val <= 0) {
+    #     return(NA)
+    #   }
+
+    #   return(round((total_exp_val / gdp_val) * 100, 2))
+    # })
 
     # Get total imports for bilateral context (when partner != "ALL")
     total_imp_val_min_yr <- eventReactive(input$go, {
@@ -551,35 +554,36 @@ mod_countries_server <- function(id) {
     })
 
     # Calculate total imports as percentage of GDP for bilateral context
-    total_imp_gdp_pct_min_yr <- eventReactive(input$go, {
-      gdp_val <- gdp_data()[year == min(inp_y()), gdp_imp]
+    
+    # total_imp_gdp_pct_min_yr <- eventReactive(input$go, {
+    #   gdp_val <- gdp_data()[year == min(inp_y()), gdp_imp]
 
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
-        return(NA)
-      }
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      total_imp_val <- total_imp_val_min_yr()
-      if (is.na(total_imp_val) || total_imp_val <= 0) {
-        return(NA)
-      }
+    #   total_imp_val <- total_imp_val_min_yr()
+    #   if (is.na(total_imp_val) || total_imp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      return(round((total_imp_val / gdp_val) * 100, 2))
-    })
+    #   return(round((total_imp_val / gdp_val) * 100, 2))
+    # })
 
-    total_imp_gdp_pct_max_yr <- eventReactive(input$go, {
-      gdp_val <- gdp_data()[year == max(inp_y()), gdp_imp]
+    # total_imp_gdp_pct_max_yr <- eventReactive(input$go, {
+    #   gdp_val <- gdp_data()[year == max(inp_y()), gdp_imp]
 
-      if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
-        return(NA)
-      }
+    #   if (length(gdp_val) == 0 || is.na(gdp_val) || gdp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      total_imp_val <- total_imp_val_max_yr()
-      if (is.na(total_imp_val) || total_imp_val <= 0) {
-        return(NA)
-      }
+    #   total_imp_val <- total_imp_val_max_yr()
+    #   if (is.na(total_imp_val) || total_imp_val <= 0) {
+    #     return(NA)
+    #   }
 
-      return(round((total_imp_val / gdp_val) * 100, 2))
-    })
+    #   return(round((total_imp_val / gdp_val) * 100, 2))
+    # })
 
     ### Text/Visual elements ----
 
@@ -595,18 +599,21 @@ mod_countries_server <- function(id) {
       }
 
       # Add GDP context only if we have valid data
-      gdp_context <- ""
-      max_pct <- exp_gdp_pct_max_yr()
 
-      if (!is.na(max_pct) && max_pct > 0) {
-        if (inp_p() == "ALL") {
-          gdp_context <- glue(" { r_add_upp_the(rname()) } { rname() }'s total exports represent { max_pct }% of its GDP.")
-        } else {
-          gdp_context <- glue(" Exports to { r_add_the(pname()) } { pname() } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
-        }
-      }
+      # gdp_context <- ""
+      # max_pct <- exp_gdp_pct_max_yr()
 
-      paste0(base_text, gdp_context)
+      # if (!is.na(max_pct) && max_pct > 0) {
+      #   if (inp_p() == "ALL") {
+      #     gdp_context <- glue(" The total exports in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
+      #   } else {
+      #     gdp_context <- glue(" Exports to { r_add_the(pname()) } { pname() } in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
+      #   }
+      # }
+
+      # paste0(base_text, gdp_context)
+
+      base_text
     })
 
     trd_smr_txt_imp <- eventReactive(input$go, {
@@ -621,18 +628,21 @@ mod_countries_server <- function(id) {
       }
 
       # Add GDP context only if we have valid data
-      gdp_context <- ""
-      max_pct <- imp_gdp_pct_max_yr()
+      
+      # gdp_context <- ""
+      # max_pct <- imp_gdp_pct_max_yr()
 
-      if (!is.na(max_pct) && max_pct > 0) {
-        if (inp_p() == "ALL") {
-          gdp_context <- glue(" { r_add_upp_the(rname()) } { rname() }'s total imports represent { max_pct }% of its GDP.")
-        } else {
-          gdp_context <- glue(" Imports from { r_add_the(pname()) } { pname() } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
-        }
-      }
+      # if (!is.na(max_pct) && max_pct > 0) {
+      #   if (inp_p() == "ALL") {
+      #     gdp_context <- glue(" The total imports in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
+      #   } else {
+      #     gdp_context <- glue(" Imports from { r_add_the(pname()) } { pname() } in { max(inp_y()) } represent { max_pct }% of { r_add_the(rname()) } { rname() }'s GDP.")
+      #   }
+      # }
 
-      paste0(base_text, gdp_context)
+      # paste0(base_text, gdp_context)
+
+      base_text
     })
 
     trd_exc_columns_title <- eventReactive(input$go, {
