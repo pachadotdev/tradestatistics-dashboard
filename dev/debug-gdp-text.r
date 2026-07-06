@@ -15,9 +15,13 @@ con <- dbConnect(
 )
 
 # GBR total trade
-trade <- dbGetQuery(con, "select * from itpde_imp where importer_iso3_dynamic = 'GBR' and year in (2012,2013,2014,2015,2016,2017)")
+trade <- setDT(dbGetQuery(con, "select * from itpde_imp_exp where importer_iso3_dynamic = 'GBR' and year in (2012,2013,2014,2015,2016,2017) and importer_iso3_dynamic != exporter_iso3_dynamic"))
+
+trade <- trade[, .(trade = sum(trade)), keyby = .(year, importer_iso3_dynamic)]
 
 gdp <- dbGetQuery(con, "select distinct year, iso3_dynamic_d, gdp_pwt_const_d from dgd where iso3_dynamic_d = 'GBR' and year in (2012,2013,2014,2015,2016,2017)")
+
+setkey(trade, NULL)
 
 tradegdp <- merge(trade, gdp)
 
