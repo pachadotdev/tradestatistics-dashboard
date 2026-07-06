@@ -264,9 +264,9 @@ p_treemap <- function(d, d2, title = NULL) {
       subtitle = JS(
         "function(_v, row) {
           if (row && row.mode === 'drilled') {
-            return 'Displaying Commodities';
+            return 'Displaying Industries';
           } else {
-            return 'Displaying Sections';
+            return 'Displaying Sectors';
           }
         }"
       ),
