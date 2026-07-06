@@ -774,7 +774,7 @@ mod_countries_server <- function(id) {
       reporter <- inp_r()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_section(
+      d <- p_aggregate_by_sector(
         dtl[year == actual_min_yr & exporter_iso3_dynamic == reporter],
         col = "trade", con = con
       )
@@ -792,7 +792,7 @@ mod_countries_server <- function(id) {
       reporter <- inp_r()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_section(
+      d <- p_aggregate_by_sector(
         dtl[year == actual_max_yr & exporter_iso3_dynamic == reporter],
         col = "trade", con = con
       )
@@ -866,7 +866,7 @@ mod_countries_server <- function(id) {
       reporter <- inp_r()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_section(
+      d <- p_aggregate_by_sector(
         dtl[year == actual_min_yr & importer_iso3_dynamic == reporter],
         col = "trade", con = con
       )
@@ -884,7 +884,7 @@ mod_countries_server <- function(id) {
       reporter <- inp_r()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_section(
+      d <- p_aggregate_by_sector(
         dtl[year == actual_max_yr & importer_iso3_dynamic == reporter],
         col = "trade", con = con
       )

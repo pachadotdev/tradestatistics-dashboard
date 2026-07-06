@@ -1,5 +1,5 @@
 available_yrs <- function() {
-  1988L:2023L
+  1988L:2022L
 }
 
 available_yrs_deflator <- function() {

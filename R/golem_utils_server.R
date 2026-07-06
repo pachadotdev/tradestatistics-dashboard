@@ -159,7 +159,7 @@ od_treemap <- function(d, d2, title = NULL) {
 #' @param d input dataset
 #' @param col column to collapse
 #' @param con SQL connection
-p_aggregate_by_section <- function(d, col, con) {
+p_aggregate_by_sector <- function(d, col, con) {
   d <- setDT(copy(d))
   d <- d[, c("industry_id", "broad_sector_id", col), with = FALSE]
   setnames(d, col, "trade_value")

@@ -16,7 +16,7 @@ mod_countries_ui <- function(id) {
                 "Years",
                 min = available_yrs_min(),
                 max = available_yrs_max(),
-                value = c(2018, 2023),
+                value = c(2018, 2022),
                 sep = "",
                 step = 1,
                 ticks = FALSE,
