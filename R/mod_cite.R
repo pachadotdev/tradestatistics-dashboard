@@ -7,7 +7,7 @@ mod_cite_ui <- function(id) {
     # Highwire-style meta tags recognized by Zotero/other managers
     tags$head(
       tags$meta(name = "citation_title", content = "Open Trade Statistics"),
-      tags$link(rel = "canonical", href = "https://shiny.tradestatistics.io"),
+      tags$link(rel = "canonical", href = "https://dashboard.tradestatistics.io"),
       tags$meta(
         name = "citation_author",
         content = "Vargas Sepulveda, Mauricio"
@@ -27,7 +27,7 @@ mod_cite_ui <- function(id) {
               "@context" = "http://schema.org",
               "@type" = "SoftwareApplication",
               name = "Open Trade Statistics Dashboard",
-              url = "https://shiny.tradestatistics.io",
+              url = "https://dashboard.tradestatistics.io",
               author = list(
                 "@type" = "Person",
                 name = "Vargas Sepulveda, Mauricio"
@@ -68,7 +68,7 @@ mod_cite_server <- function(id) {
     # configurable metadata (change these variables if you want different values)
     author_name_display <- "Mauricio Vargas Sepulveda" # used in human-readable text and meta tags
     author_name_bib <- "Vargas Sepulveda, Mauricio" # used in BibTeX author field
-    site_url <- "https://shiny.tradestatistics.io"
+    site_url <- "https://dashboard.tradestatistics.io"
     doi <- "10.5281/zenodo.3738793"
 
     output$citation_text <- renderUI({
