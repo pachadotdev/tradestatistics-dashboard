@@ -15,7 +15,7 @@ app_ui <- function(request) {
         brand = sidebar_brand(text = "Open Trade Statistics", href = "./"),
         menu_item("Welcome", tab_name = "welcome", icon = "home"),
         menu_item("Countries", tab_name = "co", icon = "globe-filled"),
-        menu_item("Products", tab_name = "pr", icon = "shopping-cart-filled"),
+        menu_item("Sectors", tab_name = "se", icon = "shopping-cart-filled"),
         menu_item("Cite", tab_name = "cite", icon = "book-filled")
       ),
       body = body(
@@ -32,7 +32,7 @@ app_ui <- function(request) {
           ),
           tab_item(
             tab_name = "pr",
-            mod_products_ui("pr")
+            mod_sectors_ui("pr")
           ),
           tab_item(
             tab_name = "cite",

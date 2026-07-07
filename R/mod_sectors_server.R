@@ -1,7 +1,7 @@
-#' @title Product profile server-side function
+#' @title Sector profile server-side function
 #' @description A shiny Module.
 #' @param id Internal parameter for Shiny.
-mod_products_server <- function(id) {
+mod_sectors_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -584,7 +584,7 @@ mod_products_server <- function(id) {
       server = TRUE
     )
 
-    ## Product profile ----
+    ## Sector profile ----
 
     ### Trade ----
 
@@ -651,7 +651,7 @@ mod_products_server <- function(id) {
     ## Download ----
 
     dwn_stl <- eventReactive(input$go, {
-      "Download product data"
+      "Download sector data"
     })
 
     dwn_txt <- eventReactive(input$go, {

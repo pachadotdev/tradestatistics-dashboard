@@ -650,9 +650,9 @@ mod_countries_server <- function(id) {
 
     exp_tt_yr <- eventReactive(input$go, {
       if (inp_e() == "ALL") {
-        glue("Exports of { r_add_the(rname()) } { rname() } to the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by product")
+        glue("Exports of { r_add_the(rname()) } { rname() } to the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by sector")
       } else {
-        glue("Exports of { r_add_the(rname()) } { rname() } to { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by product")
+        glue("Exports of { r_add_the(rname()) } { rname() } to { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by sector")
       }
     })
 
@@ -711,12 +711,12 @@ mod_countries_server <- function(id) {
       reporter <- inp_i()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_sector(
+      d <- se_aggregate_by_sector(
         dtl[year == actual_min_yr & exporter == reporter],
         col = "trade", con = con
       )
-      d2 <- p_colors(d, con = con)
-      p_treemap(d, d2, title = exp_tt_min_yr())
+      d2 <- se_colors(d, con = con)
+      se_treemap(d, d2, title = exp_tt_min_yr())
     }) |>
       bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
@@ -729,12 +729,12 @@ mod_countries_server <- function(id) {
       reporter <- inp_i()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_sector(
+      d <- se_aggregate_by_sector(
         dtl[year == actual_max_yr & exporter == reporter],
         col = "trade", con = con
       )
-      d2 <- p_colors(d, con = con)
-      p_treemap(d, d2, title = exp_tt_max_yr())
+      d2 <- se_colors(d, con = con)
+      se_treemap(d, d2, title = exp_tt_max_yr())
     }) |>
       bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
@@ -745,9 +745,9 @@ mod_countries_server <- function(id) {
 
     imp_tt_yr <- eventReactive(input$go, {
       if (inp_e() == "ALL") {
-        glue("Imports of { r_add_the(rname()) } { rname() } from the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by product")
+        glue("Imports of { r_add_the(rname()) } { rname() } from the rest of the World in { min(inp_y()) } and { max(inp_y()) }, by sector")
       } else {
-        glue("Imports of { r_add_the(rname()) } { rname() } from { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by product")
+        glue("Imports of { r_add_the(rname()) } { rname() } from { r_add_the(pname()) } { pname() } in { min(inp_y()) } and { max(inp_y()) }, by sector")
       }
     })
 
@@ -806,12 +806,12 @@ mod_countries_server <- function(id) {
       reporter <- inp_i()
       dtl <- df_dtl()
       actual_min_yr <- min(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_sector(
+      d <- se_aggregate_by_sector(
         dtl[year == actual_min_yr & importer == reporter],
         col = "trade", con = con
       )
-      d2 <- p_colors(d, con = con)
-      p_treemap(d, d2, title = imp_tt_min_yr())
+      d2 <- se_colors(d, con = con)
+      se_treemap(d, d2, title = imp_tt_min_yr())
     }) |>
       bindCache(inp_y(), inp_i(), inp_e(), inp_t()) |>
       bindEvent(input$go)
@@ -824,12 +824,12 @@ mod_countries_server <- function(id) {
       reporter <- inp_i()
       dtl <- df_dtl()
       actual_max_yr <- max(dtl$year, na.rm = TRUE)
-      d <- p_aggregate_by_sector(
+      d <- se_aggregate_by_sector(
         dtl[year == actual_max_yr & importer == reporter],
         col = "trade", con = con
       )
-      d2 <- p_colors(d, con = con)
-      out <- p_treemap(d, d2, title = imp_tt_max_yr())
+      d2 <- se_colors(d, con = con)
+      out <- se_treemap(d, d2, title = imp_tt_max_yr())
       session$sendCustomMessage("hideProgress", list())
       return(out)
     }) |>

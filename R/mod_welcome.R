@@ -13,9 +13,9 @@ mod_welcome_ui <- function(id) {
             br(),
             p("Open Trade Statistics started as a visualization project back in 2017."),
             p(HTML('The information displayed here is based on <a href="https://comtradeplus.un.org/">UN Comtrade Plus</a> datasets. These figures do not include services or foreign direct investment.')),
-            p("Explore the country and product profiles using the navigation menu."),
+            p("Explore the country and sector profiles using the navigation menu."),
             br(),
-            p("Check the R package to download the product-level data displayed here:"),
+            p("Check the R package to download the data displayed here:"),
             a(
               href = "https://github.com/ropensci/tradestatistics",
               target = "_blank",

@@ -3,7 +3,7 @@
 app_server <- function(input, output, session) {
   # Modules ----
   mod_countries_server("co")
-  mod_products_server("pr")
+  mod_sectors_server("se")
   mod_cite_server("cite")
 
   # Bookmarking ----

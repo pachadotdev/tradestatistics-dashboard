@@ -153,18 +153,18 @@ od_treemap <- function(d, d2, title = NULL) {
 
 }
 
-# PRODUCT TREEMAPS ----
+# SECTOR TREEMAPS ----
 
 #' @title Add Percentages to Sections
 #' @param d input dataset
 #' @param col column to collapse
 #' @param con SQL connection
-p_aggregate_by_sector <- function(d, col, con) {
+se_aggregate_by_sector <- function(d, col, con) {
   d <- setDT(copy(d))
   d <- d[, c("industry_id", "broad_sector_id", col), with = FALSE]
   setnames(d, col, "trade_value")
 
-  d <- p_aggregate_products(d, con = con)
+  d <- se_aggregate_sectors(d, con = con)
 
   d <- d[, .(trade_value = sum(trade_value, na.rm = TRUE)), by = .(broad_sector, commodity_name)]
 
@@ -181,10 +181,10 @@ p_aggregate_by_sector <- function(d, col, con) {
   return(d)
 }
 
-#' @title Colorize Products
+#' @title Colorize Sectors
 #' @param d input dataset
 #' @param con SQL connection
-p_colors <- function(d, con) {
+se_colors <- function(d, con) {
   d <- setDT(copy(d))
   if (!("broad_sector" %in% names(d)) || nrow(d) == 0L) return(data.table())
   sectors <- unique(d[["broad_sector"]])
@@ -195,10 +195,10 @@ p_colors <- function(d, con) {
   colors_ref[broad_sector %in% sectors]
 }
 
-#' @title Aggregate Products
+#' @title Aggregate Sectors
 #' @param d input dataset
 #' @param con SQL connection
-p_aggregate_products <- function(d, con) {
+se_aggregate_sectors <- function(d, con) {
   industries_ref <- setDT(pool::dbGetQuery(con,
     "SELECT industry_id, industry_descr AS commodity_name FROM itpd_industries"
   ))
@@ -218,11 +218,11 @@ p_aggregate_products <- function(d, con) {
   return(d)
 }
 
-#' @title Product Treemap
+#' @title Sector Treemap
 #' @param d input dataset for values
 #' @param d2 input dataset for colours
 #' @param title title for the treemap
-p_treemap <- function(d, d2, title = NULL) {
+se_treemap <- function(d, d2, title = NULL) {
   d <- setDT(copy(d))
   d2 <- setDT(copy(d2))
 

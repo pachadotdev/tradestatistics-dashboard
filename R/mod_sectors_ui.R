@@ -1,7 +1,7 @@
-#' @title Product profile UI Function
+#' @title Sector profile UI Function
 #' @description A shiny Module.
 #' @param id Internal parameter for Shiny.
-mod_products_ui <- function(id) {
+mod_sectors_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(
@@ -53,7 +53,7 @@ mod_products_ui <- function(id) {
               br(),
               actionButton(
                 ns("go"),
-                "Give me the product profile",
+                "Give me the sector profile",
                 class = "btn btn-outline btn-dark"
               )
             )
@@ -89,7 +89,7 @@ mod_products_ui <- function(id) {
               col_4(
                 htmlOutput(ns("trd_stl_trade"), container = tags$h4),
                 htmlOutput(ns("trd_smr_trade"), container = tags$p),
-                p("The chart shows global trade trends for this product category. Trade values represent the sum of all countries' imports.")
+                p("The chart shows global trade trends for this sector. Trade values represent the sum of all countries' imports.")
               ),
               col_8(
                 d3po_output(ns("trd_exc_columns_agg"), height = "500px")
@@ -108,7 +108,7 @@ mod_products_ui <- function(id) {
           br(),
           card(
             htmlOutput(ns("exp_tt_yr"), container = tags$h2),
-            p("Bar charts show the top exporters for this product. Treemaps displays all exporters."),
+            p("Bar charts show the top exporters for this sector. Treemaps displays all exporters."),
             fluidRow(
               col_6(
                 d3po_output(ns("exp_col_min_yr_usd"), height = "500px")
@@ -136,7 +136,7 @@ mod_products_ui <- function(id) {
           br(),
           card(
             htmlOutput(ns("imp_tt_yr"), container = tags$h2),
-            p("Bar charts show the top importers for this product. Treemaps display all importers."),
+            p("Bar charts show the top importers for this sector. Treemaps display all importers."),
             fluidRow(
               col_6(
                 d3po_output(ns("imp_col_min_yr_usd"), height = "500px")

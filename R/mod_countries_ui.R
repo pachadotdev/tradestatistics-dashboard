@@ -175,7 +175,7 @@ mod_countries_ui <- function(id) {
           br(),
           card(
             htmlOutput(ns("dwn_stl"), container = tags$h2),
-            p("Download the data used to generate these visualizations. Aggregated data includes yearly totals; detailed data includes trade by product category."),
+            p("Download the data used to generate these visualizations. Aggregated data includes yearly totals; detailed data includes trade by industry."),
             htmlOutput(ns("dwn_txt"), container = tags$p),
             uiOutput(ns("dwn_fmt")),
             br(),
