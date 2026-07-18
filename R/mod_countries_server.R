@@ -1,7 +1,7 @@
 #' @title Country profile server-side function
 #' @description A shiny Module.
 #' @param id Internal parameter for Tabler.
-#' @param con Shared SQL connection pool, created and closed by `app_server()`.
+#' @param con Shared SQL connection, created and closed by `app_server()`.
 mod_countries_server <- function(id, con) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -65,7 +65,7 @@ mod_countries_server <- function(id, con) {
     observeEvent(input$t, {
       tbl <- inp_t()
       yr_range <- tryCatch(
-        pool::dbGetQuery(con, sprintf(
+        dbGetQuery(con, sprintf(
           "SELECT MIN(year) AS min_yr, MAX(year) AS max_yr FROM %s",
           tbl
         )),
@@ -126,14 +126,14 @@ mod_countries_server <- function(id, con) {
       e <- gsub("'", "''", importer)
 
       if (exporter == "ALL") {
-        d_exp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_exp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
            GROUP BY year",
           tbl_agg(), min_yr, max_yr, e
         )))
-        d_imp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_imp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -142,14 +142,14 @@ mod_countries_server <- function(id, con) {
         )))
       } else {
         i <- gsub("'", "''", exporter)
-        d_exp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_exp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
            GROUP BY year",
           tbl_agg(), min_yr, max_yr, e, i
         )))
-        d_imp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_imp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -175,18 +175,18 @@ mod_countries_server <- function(id, con) {
       e <- gsub("'", "''", importer)
 
       # Get sector reference data
-      sectors_ref <- setDT(pool::dbGetQuery(con,
+      sectors_ref <- setDT(dbGetQuery(con,
         "select industry_descr, industry_id from itpd_industries"
       ))
 
       if (exporter == "ALL") {
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, importer_iso3_dynamic AS importer, exporter_iso3_dynamic AS exporter, industry_id, broad_sector_id, trade * 1000000 AS trade FROM %s WHERE year BETWEEN %d AND %d AND (importer_iso3_dynamic = '%s' OR exporter_iso3_dynamic = '%s') AND importer_iso3_dynamic != exporter_iso3_dynamic",
           tbl_dtl(), min_yr, max_yr, e, e
         )))
       } else {
         i <- gsub("'", "''", exporter)
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, importer_iso3_dynamic AS importer, exporter_iso3_dynamic AS exporter, industry_id, broad_sector_id, trade * 1000000 AS trade FROM %s WHERE year BETWEEN %d AND %d AND (
             (importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s') OR
             (importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s')
@@ -285,7 +285,7 @@ mod_countries_server <- function(id, con) {
       e <- gsub("'", "''", inp_i())
 
       # Exports: importer is exporter_iso3_dynamic, exporter is importer_iso3_dynamic
-      d_exp <- setDT(pool::dbGetQuery(con, sprintf(
+      d_exp <- setDT(dbGetQuery(con, sprintf(
         "SELECT year, importer_iso3_dynamic AS exporter, SUM(trade) * 1000000 AS trade_exp
          FROM %s WHERE year IN (%s) AND exporter_iso3_dynamic = '%s'
          AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -294,7 +294,7 @@ mod_countries_server <- function(id, con) {
       )))
 
       # Imports: importer is importer_iso3_dynamic, exporter is exporter_iso3_dynamic
-      d_imp <- setDT(pool::dbGetQuery(con, sprintf(
+      d_imp <- setDT(dbGetQuery(con, sprintf(
         "SELECT year, exporter_iso3_dynamic AS exporter, SUM(trade) * 1000000 AS trade_imp
          FROM %s WHERE year IN (%s) AND importer_iso3_dynamic = '%s'
          AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -436,14 +436,14 @@ mod_countries_server <- function(id, con) {
       max_yr <- as.integer(max(inp_y()))
 
       if (inp_e() == "ALL") {
-        d_exp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_exp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
            GROUP BY year",
           tbl_agg(), min_yr, max_yr, e
         )))
-        d_imp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_imp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -452,14 +452,14 @@ mod_countries_server <- function(id, con) {
         )))
       } else {
         i <- gsub("'", "''", inp_e())
-        d_exp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_exp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_exp
            FROM %s WHERE year BETWEEN %d AND %d AND exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
            GROUP BY year",
           tbl_agg(), min_yr, max_yr, e, i
         )))
-        d_imp <- setDT(pool::dbGetQuery(con, sprintf(
+        d_imp <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) AS trade_imp
            FROM %s WHERE year BETWEEN %d AND %d AND importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s'
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -468,7 +468,7 @@ mod_countries_server <- function(id, con) {
         )))
       }
 
-      gdp <- setDT(pool::dbGetQuery(con, sprintf(
+      gdp <- setDT(dbGetQuery(con, sprintf(
         "SELECT dgd.year, MAX(dgd.gdp_pwt_const_d) AS gdp, dc.region_colour
          FROM dgd
          JOIN dgd_colours dc ON dc.iso3_dynamic = dgd.iso3_dynamic_d
@@ -500,7 +500,7 @@ mod_countries_server <- function(id, con) {
       min_year <- min(inp_y())
       importer <- inp_i()
 
-      d <- pool::dbGetQuery(con, sprintf(
+      d <- dbGetQuery(con, sprintf(
         "SELECT SUM(trade) * 1000000 AS total_trade FROM %s WHERE year = %d AND exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic != exporter_iso3_dynamic",
         tbl_agg(), as.integer(min_year), gsub("'", "''", importer)
       ))
@@ -516,7 +516,7 @@ mod_countries_server <- function(id, con) {
       max_year <- max(inp_y())
       importer <- inp_i()
 
-      d <- pool::dbGetQuery(con, sprintf(
+      d <- dbGetQuery(con, sprintf(
         "SELECT SUM(trade) * 1000000 AS total_trade FROM %s WHERE year = %d AND exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic != exporter_iso3_dynamic",
         tbl_agg(), as.integer(max_year), gsub("'", "''", importer)
       ))
@@ -533,7 +533,7 @@ mod_countries_server <- function(id, con) {
       min_year <- min(inp_y())
       importer <- inp_i()
 
-      d <- pool::dbGetQuery(con, sprintf(
+      d <- dbGetQuery(con, sprintf(
         "SELECT SUM(trade) * 1000000 AS total_trade FROM %s WHERE year = %d AND importer_iso3_dynamic = '%s' AND importer_iso3_dynamic != exporter_iso3_dynamic",
         tbl_agg(), as.integer(min_year), gsub("'", "''", importer)
       ))
@@ -549,7 +549,7 @@ mod_countries_server <- function(id, con) {
       max_year <- max(inp_y())
       importer <- inp_i()
 
-      d <- pool::dbGetQuery(con, sprintf(
+      d <- dbGetQuery(con, sprintf(
         "SELECT SUM(trade) * 1000000 AS total_trade FROM %s WHERE year = %d AND importer_iso3_dynamic = '%s' AND importer_iso3_dynamic != exporter_iso3_dynamic",
         tbl_agg(), as.integer(max_year), gsub("'", "''", importer)
       ))
@@ -691,7 +691,7 @@ mod_countries_server <- function(id, con) {
       max_yr   <- as.integer(max(inp_y()))
 
       if (exporter == "ALL") {
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade FROM %s
            WHERE exporter_iso3_dynamic = '%s' AND year BETWEEN %d AND %d
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -701,7 +701,7 @@ mod_countries_server <- function(id, con) {
         )))
       } else {
         i <- gsub("'", "''", exporter)
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, trade * 1000000 AS trade FROM %s
            WHERE exporter_iso3_dynamic = '%s' AND importer_iso3_dynamic = '%s'
              AND year BETWEEN %d AND %d
@@ -796,7 +796,7 @@ mod_countries_server <- function(id, con) {
       max_yr   <- as.integer(max(inp_y()))
 
       if (exporter == "ALL") {
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, SUM(trade) * 1000000 AS trade FROM %s
            WHERE importer_iso3_dynamic = '%s' AND year BETWEEN %d AND %d
            AND importer_iso3_dynamic != exporter_iso3_dynamic
@@ -806,7 +806,7 @@ mod_countries_server <- function(id, con) {
         )))
       } else {
         i <- gsub("'", "''", exporter)
-        d <- setDT(pool::dbGetQuery(con, sprintf(
+        d <- setDT(dbGetQuery(con, sprintf(
           "SELECT year, trade * 1000000 AS trade FROM %s
            WHERE importer_iso3_dynamic = '%s' AND exporter_iso3_dynamic = '%s'
              AND year BETWEEN %d AND %d

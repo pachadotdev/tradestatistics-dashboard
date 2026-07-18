@@ -1,30 +1,29 @@
 #' @title The application server-side
 #' @param input,output,session Internal parameters for Shiny. DO NOT REMOVE.
 app_server <- function(input, output, session) {
-  # Single shared SQL connection pool for the whole session ----
-  con <- sql_con()
+  # Single shared SQL connection for the whole session ----
+  con <- open_con()
 
-  close_con <- function() {
-    if (!is.null(con) && dbIsValid(con)) {
-      poolClose(con)
-    }
-  }
-
-  session$onSessionEnded(close_con)
+  session$onSessionEnded(function() close_con(con))
 
   # Safety net: onSessionEnded() only fires on a normal session/websocket
   # disconnect. If the R process itself is quit (e.g. Ctrl+C out of run_app()
-  # then q()) without that event ever firing, the pool is instead swept up by
-  # R's final garbage collection with a connection still checked out, which
-  # is what produces the "Checked-out object deleted before being returned"
+  # then q()) without that event ever firing, the connection is instead swept
+  # up by R's final garbage collection while still open, which produces a
   # warning on exit. The finalizer is registered on `con` itself (not on
   # environment(), which has no other strong referents and would become
-  # collectible - and thus close the pool mid-session - as soon as
+  # collectible - and thus close the connection mid-session - as soon as
   # app_server() returns): the module server closures below hold a real,
   # strong reference to `con` for as long as they're alive, so this only
-  # fires once nothing is using the pool anymore or R exits.
-  reg.finalizer(con, function(e) {
-    if (dbIsValid(e)) poolClose(e)
+  # fires once nothing is using the connection anymore or R exits.
+  #
+  # reg.finalizer() requires its target to be an environment or an external
+  # pointer - a DBIConnection is an S4 object, not either of those, so we
+  # target con@ptr (the external pointer slot embedded in `con`) instead.
+  # That slot stays reachable for exactly as long as `con` itself does (it's
+  # part of `con`'s own data), so this preserves the same lifetime guarantee.
+  reg.finalizer(con@ptr, function(e) {
+    if (dbIsValid(con)) dbDisconnect(con)
   }, onexit = TRUE)
 
   # Modules ----

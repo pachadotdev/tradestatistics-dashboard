@@ -9,7 +9,7 @@ mod_countries_server(id, con)
 \arguments{
 \item{id}{Internal parameter for Tabler.}
 
-\item{con}{Shared SQL connection pool, created and closed by `app_server()`.}
+\item{con}{Shared SQL connection, created and closed by `app_server()`.}
 }
 \description{
 A shiny Module.

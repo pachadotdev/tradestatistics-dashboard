@@ -1,7 +1,7 @@
 #' @title Sector profile server-side function
 #' @description A shiny Module.
 #' @param id Internal parameter for Tabler.
-#' @param con Shared SQL connection pool, created and closed by `app_server()`.
+#' @param con Shared SQL connection, created and closed by `app_server()`.
 mod_sectors_server <- function(id, con) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -32,7 +32,7 @@ mod_sectors_server <- function(id, con) {
     observeEvent(input$t, {
       tbl <- inp_t()
       yr_range <- tryCatch(
-        pool::dbGetQuery(con, sprintf(
+        dbGetQuery(con, sprintf(
           "SELECT MIN(year) AS min_yr, MAX(year) AS max_yr FROM %s",
           tbl
         )),
@@ -80,7 +80,7 @@ mod_sectors_server <- function(id, con) {
       year_in <- paste(as.integer(yrs), collapse = ",")
       sector_clause <- sprintf(" AND broad_sector_id = '%s'", gsub("'", "''", scode))
 
-      d <- setDT(pool::dbGetQuery(con, sprintf(
+      d <- setDT(dbGetQuery(con, sprintf(
         "SELECT year, SUM(trade) * 1000000 AS trade FROM %s WHERE year IN (%s)%s GROUP BY year",
         tbl_dtl(), year_in, sector_clause
       )))
@@ -97,7 +97,7 @@ mod_sectors_server <- function(id, con) {
       year_in <- paste(as.integer(yrs), collapse = ",")
       sector_clause <- sprintf(" AND broad_sector_id = '%s'", gsub("'", "''", scode))
 
-      d <- setDT(pool::dbGetQuery(con, sprintf(
+      d <- setDT(dbGetQuery(con, sprintf(
         "SELECT year, importer_iso3_dynamic AS importer, exporter_iso3_dynamic AS exporter, SUM(trade) * 1000000 AS trade FROM %s WHERE year IN (%s)%s GROUP BY year, importer_iso3_dynamic, exporter_iso3_dynamic",
         tbl_dtl(), year_in, sector_clause
       )))
@@ -235,7 +235,7 @@ mod_sectors_server <- function(id, con) {
     exp_col_min_yr_usd <- reactive({
       min_year <- min(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dynamic_code, country FROM dgd_countries"
       ))
 
@@ -283,7 +283,7 @@ mod_sectors_server <- function(id, con) {
     exp_col_max_yr_usd <- reactive({
       max_year <- max(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dynamic_code, country FROM dgd_countries"
       ))
 
@@ -335,7 +335,7 @@ mod_sectors_server <- function(id, con) {
     exp_tm_dtl_min_yr <- reactive({
       min_year <- min(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dc.dynamic_code, dc.country, col.region_colour, reg.region
          FROM dgd_countries dc
          JOIN dgd_colours col ON col.iso3_dynamic = dc.dynamic_code
@@ -363,7 +363,7 @@ mod_sectors_server <- function(id, con) {
     exp_tm_dtl_max_yr <- reactive({
       max_year <- max(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dc.dynamic_code, dc.country, col.region_colour, reg.region
          FROM dgd_countries dc
          JOIN dgd_colours col ON col.iso3_dynamic = dc.dynamic_code
@@ -405,7 +405,7 @@ mod_sectors_server <- function(id, con) {
     imp_col_min_yr_usd <- reactive({
       min_year <- min(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dynamic_code, country FROM dgd_countries"
       ))
 
@@ -453,7 +453,7 @@ mod_sectors_server <- function(id, con) {
     imp_col_max_yr_usd <- reactive({
       max_year <- max(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dynamic_code, country FROM dgd_countries"
       ))
 
@@ -505,7 +505,7 @@ mod_sectors_server <- function(id, con) {
     imp_tm_dtl_min_yr <- reactive({
       min_year <- min(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dc.dynamic_code, dc.country, col.region_colour, reg.region
          FROM dgd_countries dc
          JOIN dgd_colours col ON col.iso3_dynamic = dc.dynamic_code
@@ -533,7 +533,7 @@ mod_sectors_server <- function(id, con) {
     imp_tm_dtl_max_yr <- reactive({
       max_year <- max(inp_y())
 
-      countries_data <- setDT(pool::dbGetQuery(con,
+      countries_data <- setDT(dbGetQuery(con,
         "SELECT dc.dynamic_code, dc.country, col.region_colour, reg.region
          FROM dgd_countries dc
          JOIN dgd_colours col ON col.iso3_dynamic = dc.dynamic_code

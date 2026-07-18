@@ -3,11 +3,11 @@
 #' @import d3po
 #' @importFrom cachem cache_disk
 #' @importFrom data.table `:=` .N .I .SD copy data.table fifelse frankv rbindlist setDT setnames setorder
+#' @importFrom DBI dbConnect dbDisconnect dbIsValid dbGetQuery
 #' @importFrom glue glue
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources with_golem_options
 #' @importFrom htmlwidgets JS
 #' @importFrom jsonlite toJSON
-#' @importFrom pool dbPool dbIsValid poolClose
 #' @importFrom rio export
 #' @importFrom RPostgres Postgres
 #' @importFrom stats setNames

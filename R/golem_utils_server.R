@@ -3,12 +3,9 @@ available_formats <- function() {
   c("csv", "tsv", "xlsx", "sav", "dta")
 }
 
-#' @title SQL connection
-sql_con <- function() {
-  # Read credentials from file excluded in .gitignore
-  readRenviron("/tradestatistics/credentials.txt")
-
-  dbPool(
+#' @title Open SQL connection
+open_con <- function() {
+  dbConnect(
     drv = Postgres(),
     dbname = Sys.getenv("TRADESTATISTICS_SQL_NAME"),
     host = Sys.getenv("TRADESTATISTICS_SQL_HOST"),
@@ -16,6 +13,13 @@ sql_con <- function() {
     password = Sys.getenv("TRADESTATISTICS_SQL_PASSWORD"),
     port = Sys.getenv("TRADESTATISTICS_SQL_PORT")
   )
+}
+
+#' @title CLose SQL connection
+close_con <- function(con) {
+  if (!is.null(con) && dbIsValid(con)) {
+    dbDisconnect(con)
+  }
 }
 
 # TIME ----
@@ -188,7 +192,7 @@ se_colors <- function(d, con) {
   d <- setDT(copy(d))
   if (!("broad_sector" %in% names(d)) || nrow(d) == 0L) return(data.table())
   sectors <- unique(d[["broad_sector"]])
-  colors_ref <- setDT(pool::dbGetQuery(con,
+  colors_ref <- setDT(dbGetQuery(con,
     "SELECT s.broad_sector AS broad_sector, c.colour AS sector_color
      FROM itpd_sectors s JOIN itpd_colours c ON s.broad_sector_id = c.broad_sector_id"
   ))
@@ -199,13 +203,13 @@ se_colors <- function(d, con) {
 #' @param d input dataset
 #' @param con SQL connection
 se_aggregate_sectors <- function(d, con) {
-  industries_ref <- setDT(pool::dbGetQuery(con,
+  industries_ref <- setDT(dbGetQuery(con,
     "SELECT industry_id, industry_descr AS commodity_name FROM itpd_industries"
   ))
-  sectors_ref <- setDT(pool::dbGetQuery(con,
+  sectors_ref <- setDT(dbGetQuery(con,
     "SELECT broad_sector_id, broad_sector AS broad_sector FROM itpd_sectors"
   ))
-  colours_ref <- setDT(pool::dbGetQuery(con,
+  colours_ref <- setDT(dbGetQuery(con,
     "SELECT broad_sector_id, colour AS sector_color FROM itpd_colours"
   ))
 
