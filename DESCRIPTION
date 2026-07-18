@@ -27,9 +27,7 @@ Imports:
     stats,
     tabler
 Suggests: 
-    spelling (>= 2.2),
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
+    spelling (>= 2.2)
 Encoding: UTF-8
 Language: en-US
 LazyData: true
