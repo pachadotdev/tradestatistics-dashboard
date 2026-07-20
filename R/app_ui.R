@@ -8,7 +8,9 @@ app_ui <- function() {
       # layout = "fluid-vertical",
       layout = "navbar-sticky-dark",
       theme = "light",
+      base = "stone",
       color = "teal",
+      radius = 1.5,
       show_theme_button = FALSE,
       navbar = navbar_menu(
         brand = sidebar_brand(text = "Open Trade Statistics", href = "./"),
