@@ -26,7 +26,9 @@ utils::globalVariables(c(
   "year"
 ))
 
-tablerOptions(cache = dcache(dir = "/tradestatistics/cache"))
+.onLoad <- function(libname, pkgname) {
+  tablerOptions(cache = dcache(dir = "/tradestatistics/cache"))
+}
 
 #' countries
 #'
