@@ -14,17 +14,34 @@ con <- dbConnect(
 
 # countries ----
 
-countries <- dbGetQuery(con, "select distinct country, dynamic_code from dgd_countries") 
+countries <- setDT(dbGetQuery(con, "select country, dynamic_code from dgd_countries"))
 
-countries_out <- countries$dynamic_code
+regions <- setDT(dbGetQuery(con, "select * from dgd_regions"))
+regions2 <- setDT(dbGetQuery(con, "select iso3_dynamic, region_id from dgd_colours"))
+regions <- merge(regions, regions2)
+setnames(regions, "iso3_dynamic", "dynamic_code")
 
-countries_names_out <- countries$country
+countries <- merge(countries, regions)
+setorder(countries, region, country)
 
-names(countries_out) <- countries_names_out
+countries[, region := gsub("_", " ", region)]
+countries[, region := tools::toTitleCase(region)]
 
-countries_out <- sort(countries_out)
+countries_table <- countries
 
-countries <- countries_out
+regions <- unique(countries_table$region)
+
+countries <- list()
+
+for (i in seq_along(regions)) {
+  # i = 1
+  chunk <- countries_table[region == regions[[i]]]
+  codes <- chunk$dynamic_code
+  names(codes) <- chunk$country
+  countries[[i]] <- codes
+}
+
+names(countries) <- regions
 
 usethis::use_data(countries, overwrite = T)
 

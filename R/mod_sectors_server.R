@@ -103,15 +103,16 @@ mod_sectors_server <- function(id, con) {
     ## Data ----
 
     df_agg <- reactive({
-      yrs <- inp_y()
+      years <- inp_y()
       scode <- inp_s()
+      min_yr <- as.integer(min(years))
+      max_yr <- as.integer(max(years))
 
-      year_in <- paste(as.integer(yrs), collapse = ",")
       sector_clause <- sprintf(" AND broad_sector_id = '%s'", gsub("'", "''", scode))
 
       d <- setDT(dbGetQuery(con, sprintf(
-        "SELECT year, SUM(trade) * 1000000 AS trade FROM %s WHERE year IN (%s)%s GROUP BY year",
-        tbl_dtl(), year_in, sector_clause
+        "SELECT year, SUM(trade) * 1000000 AS trade FROM %s WHERE year BETWEEN %d AND %d%s GROUP BY year",
+        tbl_dtl(), min_yr, max_yr, sector_clause
       )))
 
       return(d)

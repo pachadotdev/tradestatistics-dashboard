@@ -2,7 +2,7 @@
 app_ui <- function() {
   tagList(
     # External resources
-    golem_add_external_resources(),
+    add_external_resources(),
     page(
       title = "Open Trade Statistics",
       # layout = "fluid-vertical",
@@ -48,7 +48,7 @@ app_ui <- function() {
 #' @title Add external Resources to the Application
 #' @description This function is internally used to add external
 #'  resources inside the application.
-golem_add_external_resources <- function() {
+add_external_resources <- function() {
   addResourcePath(
     "www",
     app_sys("app/www")

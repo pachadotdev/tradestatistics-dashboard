@@ -6,9 +6,10 @@ mod_sectors_ui <- function(id) {
   tagList(
     div(
       # Filter -----
-      col12(card(
-        h2("Subset the data")
-      )),
+      row(
+        col9(card(h2("Subset the data"))),
+        col3(actionButton(ns("go"), "Give me the country profile", class = "btn-teal w-100"))
+      ),
       br(),
       col12(card(sliderInput(
         ns("y"),
@@ -43,15 +44,6 @@ mod_sectors_ui <- function(id) {
             selected = "itpde",
             selectize = TRUE,
             width = "100%"
-          ),
-          div(
-            style = "text-align:center;",
-            br(),
-            actionButton(
-              ns("go"),
-              "Give me the sector profile",
-              class = "btn btn-outline btn-dark"
-            )
           )
         ))
       ),
@@ -81,7 +73,7 @@ mod_sectors_ui <- function(id) {
             )
           ),
           br(),
-          col12(card(d3po_output(ns("trd_exc_columns_agg"), height = "500px")))
+          col12(card(d3po_output(ns("trd_exc_columns_agg"), height = "400px")))
         )
       ),
 

@@ -6,9 +6,10 @@ mod_countries_ui <- function(id) {
   tagList(
     div(
       # Filter -----
-      col12(card(
-        h2("Subset the data")
-      )),
+      row(
+        col9(card(h2("Subset the data"))),
+        col3(actionButton(ns("go"), "Give me the country profile", class = "btn-teal w-100"))
+      ),
       br(),
       col12(card(sliderInput(
         ns("y"),
@@ -23,25 +24,23 @@ mod_countries_ui <- function(id) {
       ))),
       br(),
       row(
-        col4(card(selectInput(
+        col3(card(selectInput(
           ns("i"),
           "Importer",
-          choices = tradestatisticsdashboard::countries[tradestatisticsdashboard::countries != "ALL"],
+          choices = tradestatisticsdashboard::countries,
           selected = "GBR",
           selectize = TRUE,
           width = "100%"
         ))),
-        col4(card(selectInput(
+        col3(card(selectInput(
           ns("e"),
           "Exporter",
-          choices = c(
-            "All countries" = "ALL", tradestatisticsdashboard::countries[tradestatisticsdashboard::countries != "ALL"]
-          ),
+          choices = c("All countries" = "ALL", tradestatisticsdashboard::countries),
           selected = "ALL",
           selectize = TRUE,
           width = "100%"
         ))),
-        col4(card(
+        col6(card(
           selectInput(
             ns("t"),
             "Dataset",
@@ -52,15 +51,6 @@ mod_countries_ui <- function(id) {
             selected = "itpde",
             selectize = TRUE,
             width = "100%"
-          ),
-          div(
-            style = "text-align:center;",
-            br(),
-            actionButton(
-              ns("go"),
-              "Give me the country profile",
-              class = "btn btn-outline btn-dark"
-            )
           )
         ))
       ),
@@ -91,7 +81,7 @@ mod_countries_ui <- function(id) {
             )
           ),
           br(),
-          col12(card(d3po_output(ns("trd_exc_columns_agg"), height = "500px")))
+          col12(card(d3po_output(ns("trd_exc_columns_agg"), height = "400px")))
         )
       ),
 
@@ -106,7 +96,7 @@ mod_countries_ui <- function(id) {
             p("These charts show exports evolution over the selected years (line chart) and exports composition by sector and industry (treemaps) for the first and last year.")
           )),
           br(),
-          col12(card(d3po_output(ns("trd_line_exp"), height = "500px"))),
+          col12(card(d3po_output(ns("trd_line_exp"), height = "400px"))),
           br(),
           row(
             col6(card(d3po_output(ns("exp_tm_dtl_min_yr"), height = "500px"))),
@@ -128,7 +118,7 @@ mod_countries_ui <- function(id) {
             )
           ),
           br(),
-          col12(card(d3po_output(ns("trd_line_imp"), height = "500px"))),
+          col12(card(d3po_output(ns("trd_line_imp"), height = "400px"))),
           br(),
           row(
             col6(card(d3po_output(ns("imp_tm_dtl_min_yr"), height = "500px"))),
