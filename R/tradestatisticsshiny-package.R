@@ -1,7 +1,7 @@
 #' @keywords internal
 #' @import tabler
 #' @import d3po
-#' @importFrom cachem cache_disk
+#' @importFrom tinycache dcache
 #' @importFrom data.table `:=` .N .I .SD copy data.table fifelse frankv rbindlist setDT setnames setorder uniqueN
 #' @importFrom DBI dbConnect dbDisconnect dbIsValid dbGetQuery
 #' @importFrom glue glue
@@ -26,11 +26,7 @@ utils::globalVariables(c(
   "year"
 ))
 
-tablerOptions(
-  cache = cache_disk(
-    dir = "/tradestatistics/cache"
-  )
-)
+tablerOptions(cache = dcache(dir = "/tradestatistics/cache"))
 
 #' countries
 #'

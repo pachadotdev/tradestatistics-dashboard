@@ -4,7 +4,12 @@
 \alias{run_app}
 \title{Run the Application}
 \usage{
-run_app()
+run_app(...)
+}
+\arguments{
+\item{...}{Arguments passed on to [tabler::tablerApp()], e.g. `host`,
+`port`, `launch.browser`. Used by tabler-server to bind the
+loopback port it assigns instead of the app's own default port.}
 }
 \description{
 Run the Application
