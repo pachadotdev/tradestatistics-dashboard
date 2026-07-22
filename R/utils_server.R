@@ -29,6 +29,25 @@ get_year <- function() {
   as.numeric(format(Sys.Date(), "%Y"))
 }
 
+#' @title Correct the year slider (and bookmarkable URL) to a valid range
+#' @description `updateSliderInput()` alone fixes the slider's visible
+#'   position/badge, but the "y" parameter mirrored into the URL by
+#'   `syncUrl()` (see app_server.R) only updates from real client-side
+#'   interaction with the slider - not from a server-pushed correction like
+#'   this one - so left alone it would keep showing the raw, out-of-range
+#'   selection even after the slider itself has been corrected. This sends an
+#'   extra small custom message (handled by the inline script added in
+#'   `add_external_resources()`, app_ui.R) that fixes the URL query string to
+#'   match.
+#' @param session module session (its `$ns()` is used to namespace `inputId`)
+#' @param inputId slider input id, unnamespaced (e.g. `"y"`)
+#' @param min,max,value new slider bounds/value, as for `updateSliderInput()`
+sync_year_slider <- function(session, inputId, min, max, value) {
+  updateSliderInput(session, inputId, min = min, max = max, value = value)
+  id <- if (is.function(session[["ns"]])) session$ns(inputId) else inputId
+  session$sendCustomMessage("tabler-syncYearUrl", list(id = id, value = value))
+}
+
 # DATA VALIDATION ----
 
 #' @title Ensure data frame contains expected columns to avoid mutate/group_by errors
@@ -510,6 +529,7 @@ sanctions_narrative <- function(d, country_name, lookup) {
   senders_codes <- unique(d$sanctioning_state_dynamic)
   senders <- vapply(senders_codes, country_name_from_code, character(1), lookup = lookup)
   senders_txt <- format_list_and(senders)
+  senders_txt <- gsub("\\s+\\(*.ISO.*\\)", "", senders_txt)
 
   obj_cols <- intersect(names(sanction_objective_labels), names(d))
   objectives <- sanction_objective_labels[obj_cols[vapply(obj_cols, function(col) any(d[[col]] == 1, na.rm = TRUE), logical(1))]]

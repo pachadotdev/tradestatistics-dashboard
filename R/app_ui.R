@@ -57,7 +57,24 @@ add_external_resources <- function() {
 
   tags$head(
     tags$title("Open Trade Statistics"),
-    tags$link(rel = "icon", href = "www/favicon.ico")
+    tags$link(rel = "icon", href = "www/favicon.ico"),
     # tags$link(rel = "stylesheet", type = "text/css", href = "www/tabler.css")
+    # Companion to sync_year_slider() (utils_server.R): fixes the year range
+    # mirrored in the URL by syncUrl() whenever the server corrects an
+    # out-of-range year selection, since that only happens from real slider
+    # interaction otherwise. Kept as app-level JS (not a tabler package
+    # change) since it only concerns this dashboard's own "y" sliders.
+    tags$script(HTML(
+      "document.addEventListener('tabler:message', function (e) {
+         var d = e.detail || {};
+         if (d.type !== 'tabler-syncYearUrl') return;
+         var msg = d.message || {};
+         if (!msg.id || !msg.value) return;
+         var sp = new URLSearchParams(window.location.search);
+         sp.set(msg.id, msg.value[0] + '-' + msg.value[1]);
+         var qs = sp.toString();
+         history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+       });"
+    ))
   )
 }

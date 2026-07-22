@@ -7,11 +7,6 @@ mod_sectors_server <- function(id, con) {
     ns <- session$ns
 
     # User inputs ----
-    inp_y <- reactive({
-      y <- c(min(input$y[1], input$y[2]), max(input$y[1], input$y[2]))
-      return(y)
-    })
-
     inp_s <- reactive({
       input$s
     }) # sector
@@ -19,6 +14,38 @@ mod_sectors_server <- function(id, con) {
     inp_t <- reactive({
       input$t
     }) # table
+
+    # Actual min/max year available for the selected dataset's table, read
+    # from the DB rather than hardcoded - so it stays correct if a dataset's
+    # coverage changes. This is the source of truth inp_y() clamps against
+    # below: the slider's own min/max (also updated via updateSliderInput()
+    # further down, for a nicer UX) can't be relied on alone, since it needs
+    # a client round-trip before input$y reflects it.
+    tbl_yr_range <- reactive({
+      tbl <- paste0(inp_t(), "_imp")
+      tryCatch(
+        dbGetQuery(con, sprintf(
+          "SELECT MIN(year) AS min_yr, MAX(year) AS max_yr FROM %s",
+          tbl
+        )),
+        error = function(e) NULL
+      )
+    }) |>
+      bindCache(inp_t())
+
+    inp_y <- reactive({
+      y <- c(min(input$y[1], input$y[2]), max(input$y[1], input$y[2]))
+      rng <- tbl_yr_range()
+      if (!is.null(rng) && nrow(rng) == 1 && !is.na(rng$min_yr)) {
+        min_yr <- as.integer(rng$min_yr)
+        max_yr <- as.integer(rng$max_yr)
+        y <- c(
+          max(min_yr, min(y[1], max_yr)),
+          min(max_yr, max(y[2], min_yr))
+        )
+      }
+      return(y)
+    })
 
     inp_fmt <- reactive({
       fmt <- input$fmt
@@ -59,20 +86,13 @@ mod_sectors_server <- function(id, con) {
     # Update year slider based on available data in the selected table ----
     observeEvent(input$t,
       {
-        tbl <- inp_t()
-        yr_range <- tryCatch(
-          dbGetQuery(con, sprintf(
-            "SELECT MIN(year) AS min_yr, MAX(year) AS max_yr FROM %s",
-            tbl
-          )),
-          error = function(e) NULL
-        )
+        yr_range <- tbl_yr_range()
         if (!is.null(yr_range) && nrow(yr_range) == 1 && !is.na(yr_range$min_yr)) {
           min_yr <- as.integer(yr_range$min_yr)
           max_yr <- as.integer(yr_range$max_yr)
           cur_min <- min(input$y[1], input$y[2])
           cur_max <- max(input$y[1], input$y[2])
-          updateSliderInput(session, "y",
+          sync_year_slider(session, "y",
             min = min_yr,
             max = max_yr,
             value = c(
@@ -80,6 +100,33 @@ mod_sectors_server <- function(id, con) {
               min(max_yr, max(cur_max, min_yr))
             )
           )
+        }
+      },
+      ignoreInit = TRUE
+    )
+
+    # Also correct the slider/URL when the user drags to a range that's
+    # invalid for the *already selected* table (the observer above only
+    # fires on a dataset switch) - e.g. the default 2018-2022 selection is
+    # out of range for ITPD-S (up to 2019), even with no change to input$t.
+    # inp_y() already clamps for query purposes regardless, so this is purely
+    # to keep what's displayed (slider + URL) from contradicting the actual
+    # results shown below.
+    observeEvent(input$y,
+      {
+        yr_range <- tbl_yr_range()
+        if (is.null(yr_range) || nrow(yr_range) != 1 || is.na(yr_range$min_yr)) {
+          return()
+        }
+        min_yr <- as.integer(yr_range$min_yr)
+        max_yr <- as.integer(yr_range$max_yr)
+        raw <- c(min(input$y[1], input$y[2]), max(input$y[1], input$y[2]))
+        clamped <- c(
+          max(min_yr, min(raw[1], max_yr)),
+          min(max_yr, max(raw[2], min_yr))
+        )
+        if (!identical(raw, clamped)) {
+          sync_year_slider(session, "y", min = min_yr, max = max_yr, value = clamped)
         }
       },
       ignoreInit = TRUE
